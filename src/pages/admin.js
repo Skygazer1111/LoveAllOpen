@@ -8,7 +8,7 @@ import { renderGroupStandings } from '../components/groupTable.js';
 import { renderMatchCard } from '../components/matchCard.js';
 import { renderBracket } from '../components/bracket.js';
 
-let isAuthenticated = false;
+let isAuthenticated = sessionStorage.getItem('loveall_admin') === '1';
 let currentCategory = 'mens-singles';
 
 export function renderAdminPage() {
@@ -17,30 +17,32 @@ export function renderAdminPage() {
   }
 
   const categories = store.getCategories();
-  const cat = categories[currentCategory];
 
   return `
     <div class="page" id="admin-page">
-      <div class="page-content">
-        <div class="page-header">
-          <h1 class="page-title"><i class='bx bx-cog'></i> Admin Dashboard</h1>
-          <p class="page-subtitle">Manage participants, fixtures, and scores</p>
+      <header class="page-hero page-hero-compact">
+        <div class="page-hero-inner">
+          <p class="eyebrow">Admin</p>
+          <h1 class="page-title">Tournament control</h1>
+          <p class="page-subtitle">Edit event details, publish fixtures, and update scores</p>
         </div>
+      </header>
 
-        <!-- Toolbar -->
+      <div class="page-content">
         <div class="admin-toolbar">
           <div class="admin-toolbar-actions">
-            <button class="btn btn-outline btn-sm" id="btn-export-data"><i class='bx bx-export'></i> Export Data</button>
-            <button class="btn btn-outline btn-sm" id="btn-import-data"><i class='bx bx-import'></i> Import Data</button>
-            <button class="btn btn-danger btn-sm" id="btn-reset-data"><i class='bx bx-trash'></i> Reset All</button>
+            <button class="btn btn-outline btn-sm" id="btn-export-data">Export</button>
+            <button class="btn btn-outline btn-sm" id="btn-import-data">Import</button>
+            <button class="btn btn-danger btn-sm" id="btn-reset-data">Reset all</button>
           </div>
-          <button class="btn btn-outline btn-sm" id="btn-logout"><i class='bx bx-log-out'></i> Logout</button>
+          <button class="btn btn-outline btn-sm" id="btn-logout">Logout</button>
         </div>
 
-        <!-- Category Tabs -->
+        ${renderEventDetailsSection()}
+
         <div class="tabs" id="admin-tabs">
           ${Object.values(categories).map(c => `
-            <button class="tab ${c.id === currentCategory ? 'active' : ''}" 
+            <button class="tab ${c.id === currentCategory ? 'active' : ''}"
                     data-category="${c.id}"
                     id="admin-tab-${c.id}">
               ${c.name}
@@ -48,24 +50,86 @@ export function renderAdminPage() {
           `).join('')}
         </div>
 
-        <!-- Admin Content -->
         <div id="admin-content">
           ${renderAdminContent(currentCategory)}
         </div>
 
-        <!-- Footer -->
         <footer class="footer">
           <img src="/images/icon.png" alt="LoveAll Club" class="footer-logo" />
-          <p class="footer-text">
-            Organized with <span style="color: var(--color-error);">♥</span> by <span class="footer-brand">LoveAll Club</span>
-          </p>
-          <p class="footer-copyright">
-            © ${new Date().getFullYear()} LoveAll Club. All rights reserved.
-          </p>
+          <p class="footer-text">Organised by <span class="footer-brand">LoveAll Club</span></p>
+          <p class="footer-copyright">© ${new Date().getFullYear()} LoveAll Club</p>
         </footer>
       </div>
     </div>
   `;
+}
+
+function renderEventDetailsSection() {
+  const s = store.getSettings();
+  return `
+    <div class="admin-section" id="section-event-details">
+      <div class="admin-section-header">
+        <div class="admin-section-title">
+          <span class="step-number">0</span>
+          <span>Event details &amp; venue</span>
+        </div>
+        <button class="btn btn-accent btn-sm" id="btn-save-settings">Save details</button>
+      </div>
+      <p class="admin-hint">Only visible to the public after you save. Fixtures are managed per category below.</p>
+      <div class="settings-grid">
+        <div class="input-group">
+          <label class="input-label" for="setting-name">Tournament name</label>
+          <input type="text" class="input" id="setting-name" value="${escapeAttr(s.tournamentName)}" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="setting-level">Level</label>
+          <input type="text" class="input" id="setting-level" value="${escapeAttr(s.level || '')}" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="setting-date">Date</label>
+          <input type="text" class="input" id="setting-date" value="${escapeAttr(s.tournamentDate)}" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="setting-time">Time</label>
+          <input type="text" class="input" id="setting-time" value="${escapeAttr(s.tournamentTime)}" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="setting-venue-short">Venue short name</label>
+          <input type="text" class="input" id="setting-venue-short" value="${escapeAttr(s.venueShort || '')}" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="setting-shuttles">Shuttles</label>
+          <input type="text" class="input" id="setting-shuttles" value="${escapeAttr(s.shuttles)}" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="setting-courts">Courts</label>
+          <input type="number" class="input" id="setting-courts" min="1" value="${s.courts ?? 2}" />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="setting-maps">Maps search query</label>
+          <input type="text" class="input" id="setting-maps" value="${escapeAttr(s.mapsQuery || '')}" placeholder="Toneup Badminton Thoraipakkam" />
+        </div>
+        <div class="input-group settings-full">
+          <label class="input-label" for="setting-venue">Full venue address</label>
+          <textarea class="input input-textarea" id="setting-venue" rows="2">${escapeHtml(s.venue)}</textarea>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeAttr(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function renderLoginScreen() {
@@ -73,16 +137,16 @@ function renderLoginScreen() {
     <div class="page">
       <div class="password-screen">
         <div class="password-card">
-          <img src="/images/icon.png" alt="LoveAll Club" class="hero-logo" />
-          <h2>Admin Access</h2>
-          <p>Enter the admin password to manage the tournament</p>
+          <img src="/images/icon.png" alt="LoveAll Club" class="password-logo" />
+          <h2>Admin access</h2>
+          <p>Only organisers can edit event details and publish fixtures.</p>
           <div class="input-group">
-            <input type="password" class="input w-full" id="admin-password-input" 
-                   placeholder="Enter password" autocomplete="off" />
+            <input type="password" class="input w-full" id="admin-password-input"
+                   placeholder="Password" autocomplete="current-password" />
           </div>
           <div id="password-error" class="password-error hidden"></div>
-          <button class="btn btn-accent w-full mt-lg" id="btn-admin-login" style="margin-top: var(--space-md);">
-            <i class='bx bx-lock-open-alt'></i> Login
+          <button class="btn btn-accent w-full mt-md" id="btn-admin-login">
+            Login
           </button>
         </div>
       </div>
@@ -344,8 +408,26 @@ function refreshAdminContent() {
   }
 }
 
+function bindSettingsEvents() {
+  const saveBtn = document.getElementById('btn-save-settings');
+  if (!saveBtn) return;
+  saveBtn.addEventListener('click', () => {
+    store.updateSettings({
+      tournamentName: document.getElementById('setting-name')?.value?.trim() || '',
+      level: document.getElementById('setting-level')?.value?.trim() || '',
+      tournamentDate: document.getElementById('setting-date')?.value?.trim() || '',
+      tournamentTime: document.getElementById('setting-time')?.value?.trim() || '',
+      venueShort: document.getElementById('setting-venue-short')?.value?.trim() || '',
+      venue: document.getElementById('setting-venue')?.value?.trim() || '',
+      shuttles: document.getElementById('setting-shuttles')?.value?.trim() || '',
+      courts: parseInt(document.getElementById('setting-courts')?.value || '2', 10) || 2,
+      mapsQuery: document.getElementById('setting-maps')?.value?.trim() || ''
+    });
+    showToast('Event details saved', 'success');
+  });
+}
+
 function bindAdminContentEvents() {
-  // Add participant button
   const addBtn = document.getElementById('btn-add-participant');
   if (addBtn) {
     addBtn.addEventListener('click', () => openAddParticipantModal(currentCategory));
@@ -607,7 +689,7 @@ export function initAdminPage() {
       const pwd = passwordInput?.value || '';
       if (store.checkPassword(pwd)) {
         isAuthenticated = true;
-        // Re-render the whole admin page
+        sessionStorage.setItem('loveall_admin', '1');
         const app = document.getElementById('app');
         if (app) {
           const { renderNavbar, initNavbar } = require_navbar();
@@ -675,7 +757,13 @@ export function initAdminPage() {
           const success = store.importData(ev.target.result);
           if (success) {
             showToast('Data imported successfully!', 'success');
-            refreshAdminContent();
+            const app = document.getElementById('app');
+            if (app) {
+              const { renderNavbar, initNavbar } = require_navbar();
+              app.innerHTML = renderNavbar('/admin') + renderAdminPage();
+              initNavbar();
+              initAdminPage();
+            }
           } else {
             showToast('Invalid data file', 'error');
           }
@@ -695,7 +783,13 @@ export function initAdminPage() {
         onConfirm: () => {
           store.reset();
           showToast('All data has been reset', 'info');
-          refreshAdminContent();
+          const app = document.getElementById('app');
+          if (app) {
+            const { renderNavbar, initNavbar } = require_navbar();
+            app.innerHTML = renderNavbar('/admin') + renderAdminPage();
+            initNavbar();
+            initAdminPage();
+          }
         },
         danger: true,
         confirmLabel: 'Reset Everything'
@@ -707,12 +801,12 @@ export function initAdminPage() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       isAuthenticated = false;
-      // Trigger re-render via hash change trick
+      sessionStorage.removeItem('loveall_admin');
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
   }
 
-  // Bind content-specific events
+  bindSettingsEvents();
   bindAdminContentEvents();
 }
 

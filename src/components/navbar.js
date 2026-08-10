@@ -1,31 +1,32 @@
 /**
- * Navbar Component — Neon themed
+ * Navbar — LoveAll Open
  */
 
 export function renderNavbar(currentPath) {
   const links = [
-    { path: '/', label: 'Home', icon: 'bx-home-alt' },
-    { path: '/schedule', label: 'Schedule', icon: 'bx-list-ul' },
-    { path: '/admin', label: 'Admin', icon: 'bx-cog' }
+    { path: '/', label: 'Home' },
+    { path: '/schedule', label: 'Fixtures' },
+    { path: '/admin', label: 'Admin' }
   ];
 
+  const onHero = currentPath === '/';
+
   return `
-    <nav class="navbar" id="main-navbar">
+    <nav class="navbar${onHero ? ' navbar-on-hero' : ' scrolled'}" id="main-navbar">
       <div class="navbar-inner">
         <a href="#/" class="navbar-brand">
           <img src="/images/icon.png" alt="LoveAll Club" />
           <div class="navbar-brand-text">
-            <span class="navbar-brand-name">LoveAll Open</span>
-            <span class="navbar-brand-sub">Tournament 2026</span>
+            <span class="navbar-brand-name">LoveAll</span>
+            <span class="navbar-brand-sub">Open 2026</span>
           </div>
         </a>
         <div class="navbar-links" id="navbar-links">
           ${links.map(link => `
-            <a href="#${link.path}" 
-               class="navbar-link ${currentPath === link.path ? 'active' : ''}"
+            <a href="#${link.path}"
+               class="navbar-link ${currentPath === link.path ? 'active' : ''}${link.path === '/admin' ? ' navbar-link-admin' : ''}"
                id="nav-${link.label.toLowerCase()}">
-              <i class='bx ${link.icon}'></i>
-              <span>${link.label}</span>
+              ${link.label}
             </a>
           `).join('')}
         </div>
@@ -40,6 +41,14 @@ export function renderNavbar(currentPath) {
 export function initNavbar() {
   const toggle = document.getElementById('navbar-toggle');
   const links = document.getElementById('navbar-links');
+  const navbar = document.getElementById('main-navbar');
+
+  const onScroll = () => {
+    if (!navbar) return;
+    navbar.classList.toggle('scrolled', window.scrollY > 24);
+  };
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
 
   if (toggle && links) {
     toggle.addEventListener('click', () => {

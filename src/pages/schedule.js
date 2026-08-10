@@ -1,50 +1,50 @@
 /**
- * Schedule Page — Public fixture and results view (Neon theme)
+ * Schedule Page — Public fixtures & results
  */
 
 import { store } from '../store.js';
 import { renderGroupStandings } from '../components/groupTable.js';
 import { renderMatchCard } from '../components/matchCard.js';
 import { renderBracket } from '../components/bracket.js';
+import { initMotion } from '../motion.js';
 
 let currentCategory = 'mens-singles';
 
 export function renderSchedulePage() {
+  const settings = store.getSettings();
   const categories = store.getCategories();
 
   return `
     <div class="page" id="schedule-page">
-      <div class="page-content">
-        <div class="page-header">
-          <h1 class="page-title"><i class='bx bx-list-ul'></i> Fixtures & Schedule</h1>
-          <p class="page-subtitle">View all match fixtures, group standings, and knockout brackets</p>
+      <header class="page-hero">
+        <div class="page-hero-inner">
+          <p class="eyebrow">Fixtures</p>
+          <h1 class="page-title">Match schedule</h1>
+          <p class="page-subtitle">${settings.tournamentDate} · ${settings.venueShort || 'Toneup Badminton'}</p>
         </div>
+      </header>
 
-        <!-- Category Tabs -->
-        <div class="tabs" id="schedule-tabs">
+      <div class="page-content">
+        <div class="tabs" id="schedule-tabs" role="tablist">
           ${Object.values(categories).map(c => `
-            <button class="tab ${c.id === currentCategory ? 'active' : ''}" 
+            <button class="tab ${c.id === currentCategory ? 'active' : ''}"
                     data-category="${c.id}"
+                    role="tab"
+                    aria-selected="${c.id === currentCategory}"
                     id="schedule-tab-${c.id}">
               ${c.name}
             </button>
           `).join('')}
         </div>
 
-        <!-- Content -->
         <div id="schedule-content">
           ${renderScheduleContent(currentCategory)}
         </div>
 
-        <!-- Footer -->
         <footer class="footer">
           <img src="/images/icon.png" alt="LoveAll Club" class="footer-logo" />
-          <p class="footer-text">
-            Organized with <span style="color: var(--color-error);">♥</span> by <span class="footer-brand">LoveAll Club</span>
-          </p>
-          <p class="footer-copyright">
-            © ${new Date().getFullYear()} LoveAll Club. All rights reserved.
-          </p>
+          <p class="footer-text">Organised by <span class="footer-brand">LoveAll Club</span></p>
+          <p class="footer-copyright">© ${new Date().getFullYear()} LoveAll Club</p>
         </footer>
       </div>
     </div>
@@ -62,23 +62,23 @@ function renderScheduleContent(categoryId) {
 
   if (!hasGroups && !hasKnockout) {
     return `
-      <div class="empty-state">
-        <div class="empty-state-icon"><i class='bx bx-calendar-event'></i></div>
-        <div class="empty-state-title">Fixtures Coming Soon</div>
-        <div class="empty-state-text">The schedule for ${cat.name} will be published here once it's ready. Stay tuned!</div>
+      <div class="empty-state" data-reveal>
+        <div class="empty-state-title">Fixtures coming soon</div>
+        <div class="empty-state-text">
+          The ${cat.name} draw hasn’t been published yet. Check back once the admin releases the schedule.
+        </div>
       </div>
     `;
   }
 
   let html = '';
 
-  // Group Stage
   if (hasGroups) {
     html += `
-      <section class="section">
-        <div class="section-header">
-          <h2 class="section-title"><i class='bx bx-grid-alt'></i> Group Stage</h2>
-          <div class="section-line"></div>
+      <section class="section" data-reveal>
+        <div class="section-intro">
+          <p class="eyebrow">Standings</p>
+          <h2 class="section-heading">Group stage</h2>
         </div>
         <div class="groups-grid">
           ${groups.map(group => `
@@ -94,7 +94,6 @@ function renderScheduleContent(categoryId) {
       </section>
     `;
 
-    // All Matches
     const allMatches = [];
     for (const group of groups) {
       for (const match of group.matches) {
@@ -107,41 +106,53 @@ function renderScheduleContent(categoryId) {
       const upcomingMatches = allMatches.filter(m => m.match.status === 'upcoming');
       const completedMatches = allMatches.filter(m => m.match.status === 'completed');
 
-      html += '<section class="section">';
-      html += '<div class="section-header"><h2 class="section-title"><i class=\'bx bx-play-circle\'></i> Matches</h2><div class="section-line"></div></div>';
+      html += `
+        <section class="section" data-reveal>
+          <div class="section-intro">
+            <p class="eyebrow">Fixtures</p>
+            <h2 class="section-heading">Matches</h2>
+          </div>
+      `;
 
       if (liveMatches.length > 0) {
-        html += `<h3 style="color: var(--color-live); margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm);"><i class='bx bx-broadcast' style="filter: drop-shadow(0 0 6px rgba(255,64,129,0.5));"></i> Live Now</h3>`;
-        html += '<div class="match-grid" style="margin-bottom: var(--space-xl);">';
-        html += liveMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('');
-        html += '</div>';
+        html += `
+          <h3 class="match-band-title live">
+            <span class="live-dot"></span> Live now
+          </h3>
+          <div class="match-grid match-grid-live">
+            ${liveMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('')}
+          </div>
+        `;
       }
 
       if (upcomingMatches.length > 0) {
-        html += `<h3 style="color: var(--text-secondary); margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm);"><i class='bx bx-time-five'></i> Upcoming</h3>`;
-        html += '<div class="match-grid" style="margin-bottom: var(--space-xl);">';
-        html += upcomingMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('');
-        html += '</div>';
+        html += `
+          <h3 class="match-band-title">Upcoming</h3>
+          <div class="match-grid">
+            ${upcomingMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('')}
+          </div>
+        `;
       }
 
       if (completedMatches.length > 0) {
-        html += `<h3 style="color: var(--color-success); margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm);"><i class='bx bx-check-circle'></i> Completed</h3>`;
-        html += '<div class="match-grid">';
-        html += completedMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('');
-        html += '</div>';
+        html += `
+          <h3 class="match-band-title">Completed</h3>
+          <div class="match-grid">
+            ${completedMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('')}
+          </div>
+        `;
       }
 
       html += '</section>';
     }
   }
 
-  // Knockout Stage
   if (hasKnockout) {
     html += `
-      <section class="section">
-        <div class="section-header">
-          <h2 class="section-title"><i class='bx bx-trophy'></i> Knockout Stage</h2>
-          <div class="section-line"></div>
+      <section class="section" data-reveal>
+        <div class="section-intro">
+          <p class="eyebrow">Knockout</p>
+          <h2 class="section-heading">Bracket</h2>
         </div>
         ${renderBracket(categoryId, false)}
       </section>
@@ -156,14 +167,20 @@ export function initSchedulePage() {
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       currentCategory = tab.dataset.category;
-      tabs.forEach(t => t.classList.remove('active'));
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
       tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
       const content = document.getElementById('schedule-content');
       if (content) {
         content.innerHTML = renderScheduleContent(currentCategory);
+        initMotion(content);
       }
     });
   });
+  initMotion(document.getElementById('schedule-page') || document);
 }
 
 export function getScheduleCurrentCategory() {

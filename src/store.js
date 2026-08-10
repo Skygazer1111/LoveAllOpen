@@ -16,8 +16,11 @@ const DEFAULT_DATA = {
     tournamentDate: '16th August, Sunday',
     tournamentTime: '9:00 AM to 1:00 PM',
     venue: 'Toneup Badminton, opposite Tone up Gym, Muttukkaranchavadi, Thoraipakkam, Greater Chennai',
+    venueShort: 'Toneup Badminton, Thoraipakkam',
+    mapsQuery: 'Toneup Badminton Thoraipakkam Chennai',
     shuttles: 'Yonex Mavis 350',
-    courts: 2
+    courts: 2,
+    level: 'Beginner Level'
   },
   categories: {
     'mens-singles': {
@@ -85,6 +88,13 @@ class Store {
         }
         if (!this._data.settings) {
           this._data.settings = JSON.parse(JSON.stringify(DEFAULT_DATA.settings));
+        } else {
+          const defaults = DEFAULT_DATA.settings;
+          for (const key of Object.keys(defaults)) {
+            if (this._data.settings[key] === undefined || this._data.settings[key] === null) {
+              this._data.settings[key] = defaults[key];
+            }
+          }
         }
       } else {
         this._data = JSON.parse(JSON.stringify(DEFAULT_DATA));

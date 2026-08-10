@@ -1,238 +1,232 @@
 /**
- * Home Page — Tournament Landing Page (Neon Dark Theme)
+ * Home Page — LoveAll Open Tournament
  */
 
 import { store } from '../store.js';
+import { initMotion } from '../motion.js';
+
+function mapsEmbedUrl(query) {
+  const q = encodeURIComponent(query || 'Toneup Badminton Thoraipakkam Chennai');
+  return `https://maps.google.com/maps?q=${q}&z=15&output=embed`;
+}
+
+function mapsLinkUrl(query) {
+  const q = encodeURIComponent(query || 'Toneup Badminton Thoraipakkam Chennai');
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
 
 export function renderHomePage() {
   const settings = store.getSettings();
   const categories = store.getCategories();
+  const cats = Object.values(categories);
+  const totalRegistered = cats.reduce((n, c) => n + c.participants.length, 0);
+
+  let liveCount = 0;
+  let upcomingCount = 0;
+  for (const cat of cats) {
+    for (const group of cat.groups || []) {
+      for (const m of group.matches || []) {
+        if (m.status === 'live') liveCount++;
+        if (m.status === 'upcoming') upcomingCount++;
+      }
+    }
+  }
 
   return `
     <div class="page" id="home-page">
-      <!-- Hero Section -->
       <section class="hero">
+        <div class="hero-media" data-parallax aria-hidden="true">
+          <img src="/images/poster.png" alt="" class="hero-img" />
+          <div class="hero-veil"></div>
+        </div>
         <div class="hero-content">
-          <div class="hero-badge">
-            <i class='bx bx-star neon-icon'></i>
-            Beginner Level Tournament
-          </div>
-          <img src="/images/icon.png" alt="LoveAll Club" class="hero-logo" />
+          <img src="/images/icon.png" alt="LoveAll Club" class="hero-mark" />
+          <p class="hero-brand">LoveAll Club</p>
           <h1 class="hero-title">LoveAll Open</h1>
-          <p class="hero-subtitle">Badminton Tournament 2026</p>
-          <div class="hero-date">
-            <span class="hero-date-item">
-              <i class='bx bx-calendar'></i> ${settings.tournamentDate}
-            </span>
-            <span class="hero-date-item">
-              <i class='bx bx-time-five'></i> ${settings.tournamentTime}
-            </span>
-          </div>
+          <p class="hero-lede">Badminton tournament — ${settings.tournamentDate}</p>
           <div class="hero-cta">
-            <a href="#/schedule" class="btn btn-accent btn-lg">
-              <i class='bx bx-list-ul'></i> View Schedule
-            </a>
-            <a href="#/schedule" class="btn btn-outline btn-lg" style="border-color: var(--border-neon); color: var(--neon);">
-              <i class='bx bx-trophy'></i> View Fixtures
-            </a>
+            <a href="#/schedule" class="btn btn-accent btn-lg">View fixtures</a>
+            <button type="button" class="btn btn-ghost-light btn-lg" id="btn-scroll-venue">Find the venue</button>
           </div>
+        </div>
+        <div class="hero-scroll" aria-hidden="true">
+          <span></span>
         </div>
       </section>
 
       <div class="page-content">
-        <!-- Tournament Info -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class='bx bx-info-circle'></i> Event Details</h2>
-            <div class="section-line"></div>
-          </div>
-          <div class="info-bar">
-            <div class="info-item">
-              <div class="neon-icon-box">
-                <i class='bx bx-calendar'></i>
-              </div>
-              <div class="info-item-content">
-                <span class="info-item-label">Date</span>
-                <span class="info-item-value">${settings.tournamentDate}</span>
-              </div>
+        <section class="section event-strip" data-reveal>
+          <div class="event-strip-grid">
+            <div>
+              <p class="eyebrow">When</p>
+              <h2 class="event-strip-value">${settings.tournamentDate}</h2>
+              <p class="muted">${settings.tournamentTime}</p>
             </div>
-            <div class="info-item">
-              <div class="neon-icon-box">
-                <i class='bx bx-time-five'></i>
-              </div>
-              <div class="info-item-content">
-                <span class="info-item-label">Time</span>
-                <span class="info-item-value">${settings.tournamentTime}</span>
-              </div>
+            <div>
+              <p class="eyebrow">Where</p>
+              <h2 class="event-strip-value">${settings.venueShort || 'Toneup Badminton'}</h2>
+              <p class="muted">${settings.courts} courts · ${settings.shuttles}</p>
             </div>
-            <div class="info-item">
-              <div class="neon-icon-box">
-                <i class='bx bx-map'></i>
-              </div>
-              <div class="info-item-content">
-                <span class="info-item-label">Venue</span>
-                <span class="info-item-value">${settings.venue}</span>
-              </div>
-            </div>
-            <div class="info-item">
-              <div class="neon-icon-box">
-                <i class='bx bx-target-lock'></i>
-              </div>
-              <div class="info-item-content">
-                <span class="info-item-label">Shuttles</span>
-                <span class="info-item-value">${settings.shuttles}</span>
-              </div>
+            <div>
+              <p class="eyebrow">Level</p>
+              <h2 class="event-strip-value">${settings.level || 'Beginner'}</h2>
+              <p class="muted">${totalRegistered} registered · ${upcomingCount + liveCount} fixtures</p>
             </div>
           </div>
         </section>
 
-        <!-- Categories -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class='bx bx-category'></i> Three Categories</h2>
-            <div class="section-line"></div>
+        <section class="section" id="details" data-reveal>
+          <div class="section-intro">
+            <p class="eyebrow">Event details</p>
+            <h2 class="section-heading">Everything you need for match day</h2>
+            <p class="section-copy">Date, timing, shuttle, and court setup — updated by the organisers.</p>
           </div>
-          <div class="category-grid">
-            ${Object.values(categories).map(cat => `
-              <div class="category-card">
-                <div class="category-icon">
-                  <i class='bx ${cat.type === 'singles' ? 'bx-user' : cat.id === 'mixed-doubles' ? 'bx-group' : 'bx-group'}'></i>
+          <div class="detail-rail" data-stagger>
+            <article class="detail-block">
+              <span class="detail-label">Date</span>
+              <strong>${settings.tournamentDate}</strong>
+            </article>
+            <article class="detail-block">
+              <span class="detail-label">Time</span>
+              <strong>${settings.tournamentTime}</strong>
+            </article>
+            <article class="detail-block">
+              <span class="detail-label">Shuttles</span>
+              <strong>${settings.shuttles}</strong>
+            </article>
+            <article class="detail-block">
+              <span class="detail-label">Courts</span>
+              <strong>${settings.courts} courts</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="section venue-section" id="venue" data-reveal>
+          <div class="section-intro">
+            <p class="eyebrow">Venue</p>
+            <h2 class="section-heading">Find us on the map</h2>
+            <p class="section-copy">${settings.venue}</p>
+          </div>
+          <div class="venue-layout">
+            <div class="venue-map-wrap">
+              <iframe
+                class="venue-map"
+                title="Venue map — ${settings.venueShort || 'Toneup Badminton'}"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                src="${mapsEmbedUrl(settings.mapsQuery)}"
+              ></iframe>
+            </div>
+            <div class="venue-aside">
+              <h3>${settings.venueShort || 'Toneup Badminton'}</h3>
+              <p>${settings.venue}</p>
+              <a class="btn btn-outline" href="${mapsLinkUrl(settings.mapsQuery)}" target="_blank" rel="noopener">
+                Open in Google Maps
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" data-reveal>
+          <div class="section-intro">
+            <p class="eyebrow">Categories</p>
+            <h2 class="section-heading">Three ways to play</h2>
+            <p class="section-copy">Pick your event — fees listed below.</p>
+          </div>
+          <div class="category-list" data-stagger>
+            ${cats.map(cat => `
+              <div class="category-row">
+                <div>
+                  <h3>${cat.name}</h3>
+                  <p class="muted">${cat.participants.length} registered · ${cat.feeLabel}</p>
                 </div>
-                <h3 class="category-name">${cat.name}</h3>
                 <div class="category-fee">₹${cat.fee}</div>
-                <div class="category-fee-label">${cat.feeLabel}</div>
-                <div style="margin-top: var(--space-md);">
-                  <span class="badge badge-neon">
-                    ${cat.participants.length} Registered
-                  </span>
-                </div>
               </div>
             `).join('')}
           </div>
         </section>
 
-        <!-- League Tournament Format -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class='bx bx-git-branch'></i> League Tournament Format</h2>
-            <div class="section-line"></div>
-          </div>
-          <div class="card neon-border" style="max-width: 720px;">
-            <div class="format-steps">
-              <div class="format-step">
-                <div class="format-step-icon">
-                  <i class='bx bx-grid-alt'></i>
-                </div>
-                <div class="format-step-content">
-                  <h4>Group Stage</h4>
-                  <p>Players are divided into groups. Everyone in a group plays against each other in a round-robin format.</p>
-                </div>
-              </div>
-              <div class="format-step">
-                <div class="format-step-icon">
-                  <i class='bx bx-trending-up'></i>
-                </div>
-                <div class="format-step-content">
-                  <h4>Knockout Stage</h4>
-                  <p>Top players from each group advance to the knockout bracket. Win or go home!</p>
-                </div>
-              </div>
-              <div class="format-step">
-                <div class="format-step-icon">
-                  <i class='bx bx-trophy'></i>
-                </div>
-                <div class="format-step-content">
-                  <h4>Finals</h4>
-                  <p>The best players compete head-to-head for the championship cups!</p>
-                </div>
-              </div>
+        <section class="section fixtures-teaser" data-reveal>
+          <div class="fixtures-teaser-inner">
+            <div>
+              <p class="eyebrow">Fixtures</p>
+              <h2 class="section-heading">Match schedule goes live here</h2>
+              <p class="section-copy">
+                ${liveCount > 0
+                  ? `${liveCount} match${liveCount === 1 ? '' : 'es'} live right now — scores update as play happens.`
+                  : upcomingCount > 0
+                    ? `${upcomingCount} fixtures scheduled. Check the full board for groups and knockouts.`
+                    : 'Once the admin publishes the draw, every group match and knockout fixture appears on the schedule.'}
+              </p>
             </div>
+            <a href="#/schedule" class="btn btn-accent btn-lg">Open schedule</a>
           </div>
         </section>
 
-        <!-- Prizes -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class='bx bx-trophy'></i> Prizes & Rewards</h2>
-            <div class="section-line"></div>
+        <section class="section" data-reveal>
+          <div class="section-intro">
+            <p class="eyebrow">Format</p>
+            <h2 class="section-heading">Group stage, then knockout</h2>
           </div>
-          <div class="prizes-grid">
-            <div class="prize-card">
-              <div class="prize-icon-box">
-                <i class='bx bx-medal'></i>
-              </div>
-              <div class="prize-text">
-                <span class="prize-title">Participation Medal</span>
-                <span class="prize-desc">For every participant</span>
-              </div>
-            </div>
-            <div class="prize-card">
-              <div class="prize-icon-box">
-                <i class='bx bx-certification'></i>
-              </div>
-              <div class="prize-text">
-                <span class="prize-title">Certificates</span>
-                <span class="prize-desc">For every participant</span>
-              </div>
-            </div>
-            <div class="prize-card">
-              <div class="prize-icon-box">
-                <i class='bx bx-trophy'></i>
-              </div>
-              <div class="prize-text">
-                <span class="prize-title">Championship Cups</span>
-                <span class="prize-desc">1st, 2nd & 3rd in all categories</span>
-              </div>
-            </div>
-            <div class="prize-card">
-              <div class="prize-icon-box">
-                <i class='bx bx-drink'></i>
-              </div>
-              <div class="prize-text">
-                <span class="prize-title">Refreshments</span>
-                <span class="prize-desc">Will be provided!</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Contact -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class='bx bx-phone'></i> Contact</h2>
-            <div class="section-line"></div>
-          </div>
-          <div class="contact-grid">
-            <a href="https://wa.me/916380243702" target="_blank" class="contact-card" style="text-decoration: none;">
-              <div class="contact-icon-box">
-                <i class='bx bxl-whatsapp'></i>
-              </div>
+          <ol class="format-timeline">
+            <li>
+              <span class="format-num">01</span>
               <div>
-                <div class="contact-name">Priyan</div>
-                <div class="contact-phone">6380243702</div>
+                <h3>Group stage</h3>
+                <p>Round-robin within each group — every player meets every other player.</p>
               </div>
+            </li>
+            <li>
+              <span class="format-num">02</span>
+              <div>
+                <h3>Knockout</h3>
+                <p>Top finishers advance. Win and stay in — lose and you're out.</p>
+              </div>
+            </li>
+            <li>
+              <span class="format-num">03</span>
+              <div>
+                <h3>Finals</h3>
+                <p>Championship cups for 1st, 2nd &amp; 3rd across all categories.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="section" data-reveal>
+          <div class="section-intro">
+            <p class="eyebrow">Rewards</p>
+            <h2 class="section-heading">Medals, certificates &amp; cups</h2>
+          </div>
+          <ul class="reward-list">
+            <li>Participation medal for every player</li>
+            <li>Certificates for all participants</li>
+            <li>Championship cups — 1st, 2nd &amp; 3rd in each category</li>
+            <li>Refreshments on the day</li>
+          </ul>
+        </section>
+
+        <section class="section" data-reveal>
+          <div class="section-intro">
+            <p class="eyebrow">Contact</p>
+            <h2 class="section-heading">Talk to the organisers</h2>
+          </div>
+          <div class="contact-list">
+            <a href="https://wa.me/916380243702" target="_blank" rel="noopener" class="contact-link">
+              <span class="contact-name">Priyan</span>
+              <span class="contact-phone">6380243702</span>
             </a>
-            <a href="https://wa.me/919962131645" target="_blank" class="contact-card" style="text-decoration: none;">
-              <div class="contact-icon-box">
-                <i class='bx bxl-whatsapp'></i>
-              </div>
-              <div>
-                <div class="contact-name">Hithesh</div>
-                <div class="contact-phone">9962131645</div>
-              </div>
+            <a href="https://wa.me/919962131645" target="_blank" rel="noopener" class="contact-link">
+              <span class="contact-name">Hithesh</span>
+              <span class="contact-phone">9962131645</span>
             </a>
           </div>
         </section>
 
-        <!-- Footer -->
         <footer class="footer">
           <img src="/images/icon.png" alt="LoveAll Club" class="footer-logo" />
-          <p class="footer-text">
-            Organized with <span style="color: var(--color-error);">♥</span> by <span class="footer-brand">LoveAll Club</span>
-          </p>
-          <p class="footer-copyright">
-            © ${new Date().getFullYear()} LoveAll Club. All rights reserved.
-          </p>
+          <p class="footer-text">Organised by <span class="footer-brand">LoveAll Club</span></p>
+          <p class="footer-copyright">© ${new Date().getFullYear()} LoveAll Club</p>
         </footer>
       </div>
     </div>
@@ -240,5 +234,8 @@ export function renderHomePage() {
 }
 
 export function initHomePage() {
-  // No special initialization needed
+  initMotion(document.getElementById('home-page') || document);
+  document.getElementById('btn-scroll-venue')?.addEventListener('click', () => {
+    document.getElementById('venue')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
