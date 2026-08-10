@@ -210,16 +210,13 @@ export function renderHomePage() {
         <section class="section" data-reveal>
           <div class="section-intro">
             <p class="eyebrow">Contact</p>
-            <h2 class="section-heading">Talk to the organisers</h2>
+            <h2 class="section-heading">Talk to the organiser</h2>
+            <p class="section-copy">Message Priyan on WhatsApp — your number stays private on this site.</p>
           </div>
-          <div class="contact-list">
-            <a href="https://wa.me/916380243702" target="_blank" rel="noopener" class="contact-link">
+          <div class="contact-list contact-list-single">
+            <a href="/api/wa/priyan" target="_blank" rel="noopener noreferrer" class="contact-link">
               <span class="contact-name">Priyan</span>
-              <span class="contact-phone">6380243702</span>
-            </a>
-            <a href="https://wa.me/919962131645" target="_blank" rel="noopener" class="contact-link">
-              <span class="contact-name">Hithesh</span>
-              <span class="contact-phone">9962131645</span>
+              <span class="contact-phone">Chat on WhatsApp</span>
             </a>
           </div>
         </section>

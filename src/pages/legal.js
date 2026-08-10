@@ -140,8 +140,8 @@ export function renderPrivacyPage() {
           <section>
             <h2>11. Contact</h2>
             <p>
-              For privacy questions about this website or the tournament, contact LoveAll Club organisers via
-              the WhatsApp numbers listed on the home page (Priyan / Hithesh).
+              For privacy questions about this website or the tournament, use the WhatsApp contact
+              button on the home page to reach LoveAll Club.
             </p>
           </section>
         </article>
@@ -254,8 +254,8 @@ export function renderTermsPage() {
           <section>
             <h2>11. Contact</h2>
             <p>
-              Questions about these terms or the tournament can be sent to LoveAll Club organisers via the contact
-              details on the home page.
+              Questions about these terms or the tournament can be sent via the WhatsApp contact
+              on the home page.
             </p>
           </section>
         </article>
