@@ -543,6 +543,98 @@ h1, h2, h3, h4 {
   margin: 8px 0 6px;
 }
 
+/* ----- Countdown ----- */
+.countdown-section {
+  margin-top: -8px;
+}
+.countdown-panel {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr;
+  gap: 28px;
+  align-items: center;
+  padding: 34px 36px;
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(135deg, rgba(214, 239, 74, 0.42), rgba(31, 107, 69, 0.12) 48%, rgba(255, 255, 255, 0.9)),
+    var(--surface);
+  border: 1px solid rgba(31, 107, 69, 0.16);
+  box-shadow: var(--shadow-soft);
+}
+.countdown-panel::before {
+  content: '';
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -60px;
+  top: -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(214, 239, 74, 0.45), transparent 68%);
+  pointer-events: none;
+}
+.countdown-copy {
+  position: relative;
+  z-index: 1;
+}
+.countdown-title {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  margin-top: 8px;
+  letter-spacing: -0.03em;
+}
+.countdown-sub {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 1.02rem;
+}
+.countdown-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 96px;
+  padding: 14px 8px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 36, 26, 0.08);
+  backdrop-filter: blur(8px);
+}
+.countdown-value {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 3.4vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+.countdown-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+.countdown-unit:last-child .countdown-value {
+  color: var(--coral);
+}
+.countdown-live {
+  background:
+    linear-gradient(135deg, rgba(228, 87, 46, 0.16), rgba(214, 239, 74, 0.35)),
+    var(--surface);
+}
+.countdown-live #countdown-grid {
+  opacity: 0.35;
+}
+
 /* ----- Details ----- */
 .detail-rail {
   display: grid;
@@ -1449,7 +1541,8 @@ h1, h2, h3, h4 {
   .venue-layout,
   .reward-list,
   .contact-list,
-  .settings-grid {
+  .settings-grid,
+  .countdown-panel {
     grid-template-columns: 1fr;
   }
   .fixtures-teaser-inner {
@@ -1622,6 +1715,30 @@ h1, h2, h3, h4 {
 
   .event-strip-value {
     font-size: 1.15rem;
+  }
+
+  .countdown-panel {
+    padding: 24px 18px;
+    gap: 18px;
+  }
+
+  .countdown-grid {
+    gap: 8px;
+  }
+
+  .countdown-unit {
+    min-height: 84px;
+    padding: 12px 4px;
+    border-radius: 14px;
+  }
+
+  .countdown-value {
+    font-size: 1.45rem;
+  }
+
+  .countdown-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
   }
 
   .detail-block strong {
