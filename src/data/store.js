@@ -1,63 +1,12 @@
 /**
- * LoveAll Tournament 2026 — Data Store
- * localStorage-based data management with event system
+ * Tournament data store — localStorage persistence + domain operations
  */
 
-const STORAGE_KEY = 'loveall_tournament_2026';
-const ADMIN_PASSWORD = 'loveall2026';
+import { STORAGE_KEY, ADMIN_PASSWORD, DEFAULT_DATA } from './defaults.js';
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 }
-
-const DEFAULT_DATA = {
-  settings: {
-    tournamentName: 'LoveAll Open Badminton Tournament 2026',
-    tournamentDate: '16th August, Sunday',
-    tournamentTime: '9:00 AM to 1:00 PM',
-    venue: 'Toneup Badminton, opposite Tone up Gym, Muttukkaranchavadi, Thoraipakkam, Greater Chennai',
-    venueShort: 'Toneup Badminton, Thoraipakkam',
-    mapsQuery: 'Toneup Badminton Thoraipakkam Chennai',
-    shuttles: 'Yonex Mavis 350',
-    courts: 2,
-    level: 'Beginner Level'
-  },
-  categories: {
-    'mens-singles': {
-      id: 'mens-singles',
-      name: "Men's Singles",
-      fee: 500,
-      feeLabel: 'Registration Fee',
-      type: 'singles',
-      icon: '🏸',
-      participants: [],
-      groups: [],
-      knockout: { rounds: [] }
-    },
-    'mens-doubles': {
-      id: 'mens-doubles',
-      name: "Men's Doubles",
-      fee: 750,
-      feeLabel: 'Per Team',
-      type: 'doubles',
-      icon: '🏸',
-      participants: [],
-      groups: [],
-      knockout: { rounds: [] }
-    },
-    'mixed-doubles': {
-      id: 'mixed-doubles',
-      name: 'Mixed Doubles',
-      fee: 750,
-      feeLabel: 'Per Team',
-      type: 'doubles',
-      icon: '🏸',
-      participants: [],
-      groups: [],
-      knockout: { rounds: [] }
-    }
-  }
-};
 
 class Store {
   constructor() {

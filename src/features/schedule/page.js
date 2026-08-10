@@ -2,12 +2,12 @@
  * Schedule Page — Public fixtures & results
  */
 
-import { store } from '../store.js';
-import { renderGroupStandings } from '../components/groupTable.js';
-import { renderMatchCard } from '../components/matchCard.js';
-import { renderBracket } from '../components/bracket.js';
-import { initMotion } from '../motion.js';
-import { renderFooter } from '../components/footer.js';
+import { store } from '../../data/store.js';
+import { renderGroupStandings } from '../../ui/tournament/group-table.js';
+import { renderMatchCard } from '../../ui/tournament/match-card.js';
+import { renderBracket } from '../../ui/tournament/bracket.js';
+import { initMotion } from '../../ui/motion.js';
+import { renderFooter } from '../../ui/layout/footer.js';
 
 let currentCategory = 'mens-singles';
 

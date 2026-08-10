@@ -2,7 +2,7 @@
  * Knockout Bracket Component
  */
 
-import { store } from '../store.js';
+import { store } from '../../data/store.js';
 
 export function renderBracket(categoryId, isAdmin = false) {
   const knockout = store.getKnockout(categoryId);

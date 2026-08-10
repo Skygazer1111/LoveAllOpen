@@ -2,7 +2,7 @@
  * Match Card Component
  */
 
-import { store } from '../store.js';
+import { store } from '../../data/store.js';
 
 export function renderMatchCard(categoryId, match, options = {}) {
   const { showGroup = false, groupName = '', isAdmin = false, groupId = '' } = options;

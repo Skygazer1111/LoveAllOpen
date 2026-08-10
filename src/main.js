@@ -1,17 +1,21 @@
 /**
- * LoveAll Tournament 2026 — Main Entry Point
- * Initializes router, renders pages, and manages navigation
+ * App bootstrap — router, shell, page rendering
  */
 
-import { Router } from './router.js';
-import { renderNavbar, initNavbar } from './components/navbar.js';
-import { renderHomePage, initHomePage } from './pages/home.js';
-import { renderSchedulePage, initSchedulePage } from './pages/schedule.js';
-import { renderAdminPage, initAdminPage } from './pages/admin.js';
-import { renderPrivacyPage, renderTermsPage, initPrivacyPage, initTermsPage } from './pages/legal.js';
-import { animatePageEnter } from './motion.js';
+import { Router } from './app/router.js';
+import { renderNavbar, initNavbar } from './ui/layout/navbar.js';
+import { renderHomePage, initHomePage } from './features/home/page.js';
+import { renderSchedulePage, initSchedulePage } from './features/schedule/page.js';
+import { renderAdminPage, initAdminPage } from './features/admin/page.js';
+import {
+  renderPrivacyPage,
+  renderTermsPage,
+  initPrivacyPage,
+  initTermsPage
+} from './features/legal/page.js';
+import { animatePageEnter } from './ui/motion.js';
 
-// Expose navbar module globally for admin page's re-render trick
+// Expose navbar for admin re-render after login
 window.__navbarModule = { renderNavbar, initNavbar };
 
 const app = document.getElementById('app');
@@ -50,7 +54,6 @@ router.onRouteChange((route) => {
   renderPage(route);
 });
 
-// Initial render
 const initialPath = window.location.hash.slice(1) || '/';
 const initialRoute = routes.find(r => r.path === initialPath) || routes[0];
 renderPage(initialRoute);

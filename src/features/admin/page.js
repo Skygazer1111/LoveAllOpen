@@ -2,12 +2,12 @@
  * Admin Page — Tournament Management Dashboard
  */
 
-import { store } from '../store.js';
-import { showModal, closeModal, showConfirm, showToast } from '../components/modal.js';
-import { renderGroupStandings } from '../components/groupTable.js';
-import { renderMatchCard } from '../components/matchCard.js';
-import { renderBracket } from '../components/bracket.js';
-import { renderFooter } from '../components/footer.js';
+import { store } from '../../data/store.js';
+import { showModal, closeModal, showConfirm, showToast } from '../../ui/feedback/modal.js';
+import { renderGroupStandings } from '../../ui/tournament/group-table.js';
+import { renderMatchCard } from '../../ui/tournament/match-card.js';
+import { renderBracket } from '../../ui/tournament/bracket.js';
+import { renderFooter } from '../../ui/layout/footer.js';
 
 let isAuthenticated = sessionStorage.getItem('loveall_admin') === '1';
 let currentCategory = 'mens-singles';

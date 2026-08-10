@@ -2,7 +2,7 @@
  * Group Standings Table Component
  */
 
-import { store } from '../store.js';
+import { store } from '../../data/store.js';
 
 export function renderGroupStandings(categoryId, groupId, qualifyCount = 2) {
   const standings = store.getGroupStandings(categoryId, groupId);
