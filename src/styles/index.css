@@ -532,8 +532,8 @@ h1, h2, h3, h4 {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(8, 20, 14, 0.45) 0%, rgba(8, 20, 14, 0.28) 40%, rgba(8, 20, 14, 0.88) 100%),
-    linear-gradient(90deg, rgba(8, 20, 14, 0.72) 0%, rgba(8, 20, 14, 0.4) 42%, transparent 70%);
+    linear-gradient(180deg, rgba(8, 20, 14, 0.42) 0%, rgba(8, 20, 14, 0.32) 40%, rgba(8, 20, 14, 0.88) 100%),
+    radial-gradient(ellipse 70% 60% at 50% 70%, rgba(8, 20, 14, 0.55), transparent 70%);
 }
 .hero-content {
   position: relative;
@@ -542,6 +542,10 @@ h1, h2, h3, h4 {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: calc(var(--navbar-height) + var(--space-2xl)) var(--space-lg) var(--space-3xl);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .hero-mark {
   width: 58px;
@@ -567,7 +571,7 @@ h1, h2, h3, h4 {
   line-height: 1.06;
   color: #fff;
   letter-spacing: -0.02em;
-  max-width: 11ch;
+  max-width: 12ch;
   text-wrap: balance;
 }
 .hero-lede {
@@ -578,13 +582,14 @@ h1, h2, h3, h4 {
   line-height: 1.5;
   letter-spacing: 0.01em;
   color: rgba(255, 255, 255, 0.86);
-  max-width: 26rem;
+  max-width: 28rem;
 }
 .hero-cta {
   margin-top: 32px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  justify-content: center;
 }
 .hero-scroll {
   position: absolute;
