@@ -3,10 +3,10 @@
  */
 
 export function renderNavbar(currentPath) {
+  // Admin stays available at #/admin but is intentionally hidden from public nav
   const links = [
     { path: '/', label: 'Home' },
-    { path: '/schedule', label: 'Fixtures' },
-    { path: '/admin', label: 'Admin' }
+    { path: '/schedule', label: 'Fixtures' }
   ];
 
   const onHero = currentPath === '/';
@@ -24,7 +24,7 @@ export function renderNavbar(currentPath) {
         <div class="navbar-links" id="navbar-links">
           ${links.map(link => `
             <a href="#${link.path}"
-               class="navbar-link ${currentPath === link.path ? 'active' : ''}${link.path === '/admin' ? ' navbar-link-admin' : ''}"
+               class="navbar-link ${currentPath === link.path ? 'active' : ''}"
                id="nav-${link.label.toLowerCase()}">
               ${link.label}
             </a>
