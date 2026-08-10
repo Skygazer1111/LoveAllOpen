@@ -43,7 +43,7 @@
   --border-default: var(--border);
   --border-neon: rgba(31, 107, 69, 0.35);
 
-  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-heading: 'Sora', system-ui, sans-serif;
   --font-body: 'Figtree', system-ui, sans-serif;
 
   --space-xs: 4px;
@@ -121,8 +121,8 @@ ul, ol { list-style: none; }
 
 h1, h2, h3, h4 {
   font-family: var(--font-heading);
-  font-weight: 800;
-  line-height: 1.12;
+  font-weight: 700;
+  line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--ink);
 }
@@ -454,8 +454,8 @@ h1, h2, h3, h4 {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(10, 24, 16, 0.35) 0%, rgba(10, 24, 16, 0.2) 35%, rgba(10, 24, 16, 0.82) 100%),
-    linear-gradient(90deg, rgba(10, 24, 16, 0.55), transparent 55%);
+    linear-gradient(180deg, rgba(8, 20, 14, 0.45) 0%, rgba(8, 20, 14, 0.28) 40%, rgba(8, 20, 14, 0.88) 100%),
+    linear-gradient(90deg, rgba(8, 20, 14, 0.72) 0%, rgba(8, 20, 14, 0.4) 42%, transparent 70%);
 }
 .hero-content {
   position: relative;
@@ -466,38 +466,44 @@ h1, h2, h3, h4 {
   padding: calc(var(--navbar-height) + var(--space-2xl)) var(--space-lg) var(--space-3xl);
 }
 .hero-mark {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  margin-bottom: 18px;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  margin-bottom: 22px;
   animation: mark-float 4s ease-in-out infinite;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
 .hero-brand {
   font-family: var(--font-heading);
-  font-size: clamp(1.1rem, 2.5vw, 1.45rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: clamp(0.78rem, 1.4vw, 0.92rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--court);
-  margin-bottom: 8px;
+  margin-bottom: 14px;
 }
 .hero-title {
-  font-size: clamp(3.4rem, 11vw, 7rem);
-  font-weight: 800;
-  line-height: 0.92;
+  font-family: var(--font-heading);
+  font-size: clamp(2.8rem, 8vw, 5.4rem);
+  font-weight: 600;
+  line-height: 1.06;
   color: #fff;
-  letter-spacing: -0.04em;
-  max-width: 10ch;
+  letter-spacing: -0.02em;
+  max-width: 11ch;
+  text-wrap: balance;
 }
 .hero-lede {
   margin-top: 18px;
-  font-size: clamp(1.05rem, 2vw, 1.25rem);
-  color: rgba(255, 255, 255, 0.82);
-  max-width: 28rem;
+  font-family: var(--font-body);
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.86);
+  max-width: 26rem;
 }
 .hero-cta {
-  margin-top: 28px;
+  margin-top: 32px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -1793,13 +1799,15 @@ h1, h2, h3, h4 {
   }
 
   .hero-brand {
-    font-size: 0.95rem;
-    letter-spacing: 0.1em;
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
   }
 
   .hero-title {
-    font-size: clamp(2.6rem, 14vw, 3.6rem);
+    font-size: clamp(2.4rem, 11vw, 3.2rem);
     max-width: none;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
   }
 
   .hero-lede {
@@ -2101,8 +2109,8 @@ h1, h2, h3, h4 {
   }
 
   .hero-title {
-    font-size: clamp(2.4rem, 13vw, 3rem);
-    letter-spacing: -0.03em;
+    font-size: clamp(2.2rem, 11vw, 2.8rem);
+    letter-spacing: -0.01em;
   }
 
   .btn-lg {
