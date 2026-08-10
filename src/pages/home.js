@@ -20,7 +20,6 @@ export function renderHomePage() {
   const settings = store.getSettings();
   const categories = store.getCategories();
   const cats = Object.values(categories);
-  const totalRegistered = cats.reduce((n, c) => n + c.participants.length, 0);
 
   let liveCount = 0;
   let upcomingCount = 0;
@@ -71,7 +70,7 @@ export function renderHomePage() {
             <div>
               <p class="eyebrow">Level</p>
               <h2 class="event-strip-value">${settings.level || 'Beginner'}</h2>
-              <p class="muted">${totalRegistered} registered · ${upcomingCount + liveCount} fixtures</p>
+              <p class="muted">${upcomingCount + liveCount > 0 ? `${upcomingCount + liveCount} fixtures listed` : 'See Fixtures for the schedule'}</p>
             </div>
           </div>
         </section>
@@ -139,7 +138,7 @@ export function renderHomePage() {
               <div class="category-row">
                 <div>
                   <h3>${cat.name}</h3>
-                  <p class="muted">${cat.participants.length} registered · ${cat.feeLabel}</p>
+                  <p class="muted">${cat.feeLabel}</p>
                 </div>
                 <div class="category-fee">₹${cat.fee}</div>
               </div>
