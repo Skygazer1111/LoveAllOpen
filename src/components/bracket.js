@@ -10,7 +10,7 @@ export function renderBracket(categoryId, isAdmin = false) {
   if (!knockout.rounds || knockout.rounds.length === 0) {
     return `
       <div class="empty-state">
-        <div class="empty-state-icon">🏆</div>
+        <div class="empty-state-icon"><i class='bx bx-trophy'></i></div>
         <div class="empty-state-title">No Knockout Stage Yet</div>
         <div class="empty-state-text">The knockout bracket will appear here once generated from group stage results.</div>
       </div>

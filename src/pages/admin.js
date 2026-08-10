@@ -23,18 +23,18 @@ export function renderAdminPage() {
     <div class="page" id="admin-page">
       <div class="page-content">
         <div class="page-header">
-          <h1 class="page-title">⚙️ Admin Dashboard</h1>
+          <h1 class="page-title"><i class='bx bx-cog'></i> Admin Dashboard</h1>
           <p class="page-subtitle">Manage participants, fixtures, and scores</p>
         </div>
 
         <!-- Toolbar -->
         <div class="admin-toolbar">
           <div class="admin-toolbar-actions">
-            <button class="btn btn-outline btn-sm" id="btn-export-data">📥 Export Data</button>
-            <button class="btn btn-outline btn-sm" id="btn-import-data">📤 Import Data</button>
-            <button class="btn btn-danger btn-sm" id="btn-reset-data">🗑️ Reset All</button>
+            <button class="btn btn-outline btn-sm" id="btn-export-data"><i class='bx bx-export'></i> Export Data</button>
+            <button class="btn btn-outline btn-sm" id="btn-import-data"><i class='bx bx-import'></i> Import Data</button>
+            <button class="btn btn-danger btn-sm" id="btn-reset-data"><i class='bx bx-trash'></i> Reset All</button>
           </div>
-          <button class="btn btn-outline btn-sm" id="btn-logout">🚪 Logout</button>
+          <button class="btn btn-outline btn-sm" id="btn-logout"><i class='bx bx-log-out'></i> Logout</button>
         </div>
 
         <!-- Category Tabs -->
@@ -52,6 +52,17 @@ export function renderAdminPage() {
         <div id="admin-content">
           ${renderAdminContent(currentCategory)}
         </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <img src="/images/icon.png" alt="LoveAll Club" class="footer-logo" />
+          <p class="footer-text">
+            Organized with <span style="color: var(--color-error);">♥</span> by <span class="footer-brand">LoveAll Club</span>
+          </p>
+          <p class="footer-copyright">
+            © ${new Date().getFullYear()} LoveAll Club. All rights reserved.
+          </p>
+        </footer>
       </div>
     </div>
   `;
@@ -71,7 +82,7 @@ function renderLoginScreen() {
           </div>
           <div id="password-error" class="password-error hidden"></div>
           <button class="btn btn-accent w-full mt-lg" id="btn-admin-login" style="margin-top: var(--space-md);">
-            🔓 Login
+            <i class='bx bx-lock-open-alt'></i> Login
           </button>
         </div>
       </div>
@@ -113,14 +124,14 @@ function renderParticipantsSection(categoryId, cat) {
         </div>
         <div class="admin-actions">
           <button class="btn btn-accent btn-sm" id="btn-add-participant">
-            + Add ${isSingles ? 'Player' : 'Team'}
+            <i class='bx bx-plus'></i> Add ${isSingles ? 'Player' : 'Team'}
           </button>
         </div>
       </div>
 
       ${participants.length === 0 ? `
         <div class="empty-state" style="padding: var(--space-xl);">
-          <div class="empty-state-icon">${isSingles ? '🧑' : '👥'}</div>
+          <div class="empty-state-icon"><i class='bx ${isSingles ? 'bx-user' : 'bx-group'}'></i></div>
           <div class="empty-state-title">No ${isSingles ? 'Players' : 'Teams'} Yet</div>
           <div class="empty-state-text">Click the button above to add ${isSingles ? 'players' : 'teams'} to ${cat.name}.</div>
         </div>
@@ -138,7 +149,7 @@ function renderParticipantsSection(categoryId, cat) {
                 </div>
               </div>
               <button class="btn btn-icon btn-danger" onclick="window.removeParticipant('${categoryId}', '${p.id}')" title="Remove">
-                ✕
+                <i class='bx bx-x'></i>
               </button>
             </div>
           `).join('')}
@@ -172,12 +183,12 @@ function renderGroupsSection(categoryId, cat) {
                 </select>
               </div>
               <button class="btn btn-accent btn-sm" id="btn-generate-groups" ${!hasEnoughParticipants ? 'disabled' : ''}>
-                ✨ Generate Groups
+                <i class='bx bx-shuffle'></i> Generate Groups
               </button>
             </div>
           ` : `
             <button class="btn btn-danger btn-sm" id="btn-clear-groups">
-              🗑️ Clear Groups
+              <i class='bx bx-trash'></i> Clear Groups
             </button>
           `}
         </div>
@@ -248,7 +259,7 @@ function renderMatchesSection(categoryId, cat) {
   for (const group of groups) {
     html += `
       <div style="margin-bottom: var(--space-xl);">
-        <h3 style="margin-bottom: var(--space-md); color: var(--color-accent);">${group.name}</h3>
+        <h3 style="margin-bottom: var(--space-md); color: var(--neon);">${group.name}</h3>
         <div class="match-grid">
           ${group.matches.map(match => 
             renderMatchCard(categoryId, match, { isAdmin: true, groupId: group.id })
@@ -295,13 +306,13 @@ function renderKnockoutSection(categoryId, cat) {
                 </select>
               </div>
               <button class="btn btn-accent btn-sm" id="btn-generate-knockout" ${!allGroupsDone ? 'disabled title="Complete all group matches first"' : ''}>
-                🏆 Generate Bracket
+                <i class='bx bx-trophy'></i> Generate Bracket
               </button>
             </div>
           ` : ''}
           ${hasKnockout ? `
             <button class="btn btn-danger btn-sm" id="btn-clear-knockout">
-              🗑️ Clear Bracket
+              <i class='bx bx-trash'></i> Clear Bracket
             </button>
           ` : ''}
         </div>

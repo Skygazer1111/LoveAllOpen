@@ -1,12 +1,12 @@
 /**
- * Navbar Component
+ * Navbar Component — Neon themed
  */
 
 export function renderNavbar(currentPath) {
   const links = [
-    { path: '/', label: 'Home', icon: '🏠' },
-    { path: '/schedule', label: 'Schedule', icon: '📋' },
-    { path: '/admin', label: 'Admin', icon: '⚙️' }
+    { path: '/', label: 'Home', icon: 'bx-home-alt' },
+    { path: '/schedule', label: 'Schedule', icon: 'bx-list-ul' },
+    { path: '/admin', label: 'Admin', icon: 'bx-cog' }
   ];
 
   return `
@@ -24,13 +24,13 @@ export function renderNavbar(currentPath) {
             <a href="#${link.path}" 
                class="navbar-link ${currentPath === link.path ? 'active' : ''}"
                id="nav-${link.label.toLowerCase()}">
-              <span>${link.icon}</span>
+              <i class='bx ${link.icon}'></i>
               <span>${link.label}</span>
             </a>
           `).join('')}
         </div>
         <button class="navbar-mobile-toggle" id="navbar-toggle" aria-label="Toggle navigation">
-          ☰
+          <i class='bx bx-menu'></i>
         </button>
       </div>
     </nav>
@@ -44,14 +44,17 @@ export function initNavbar() {
   if (toggle && links) {
     toggle.addEventListener('click', () => {
       links.classList.toggle('open');
-      toggle.textContent = links.classList.contains('open') ? '✕' : '☰';
+      const icon = toggle.querySelector('i');
+      if (icon) {
+        icon.className = links.classList.contains('open') ? 'bx bx-x' : 'bx bx-menu';
+      }
     });
 
-    // Close on link click (mobile)
     links.querySelectorAll('.navbar-link').forEach(link => {
       link.addEventListener('click', () => {
         links.classList.remove('open');
-        toggle.textContent = '☰';
+        const icon = toggle.querySelector('i');
+        if (icon) icon.className = 'bx bx-menu';
       });
     });
   }
