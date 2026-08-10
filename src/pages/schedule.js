@@ -7,6 +7,7 @@ import { renderGroupStandings } from '../components/groupTable.js';
 import { renderMatchCard } from '../components/matchCard.js';
 import { renderBracket } from '../components/bracket.js';
 import { initMotion } from '../motion.js';
+import { renderFooter } from '../components/footer.js';
 
 let currentCategory = 'mens-singles';
 
@@ -41,11 +42,7 @@ export function renderSchedulePage() {
           ${renderScheduleContent(currentCategory)}
         </div>
 
-        <footer class="footer">
-          <img src="/images/icon.png" alt="LoveAll Club" class="footer-logo" />
-          <p class="footer-text">Organised by <span class="footer-brand">LoveAll Club</span></p>
-          <p class="footer-copyright">© ${new Date().getFullYear()} LoveAll Club</p>
-        </footer>
+        ${renderFooter()}
       </div>
     </div>
   `;

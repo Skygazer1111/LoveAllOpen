@@ -4,6 +4,7 @@
 
 import { store } from '../store.js';
 import { initMotion } from '../motion.js';
+import { renderFooter } from '../components/footer.js';
 
 function mapsEmbedUrl(query) {
   const q = encodeURIComponent(query || 'Toneup Badminton Thoraipakkam Chennai');
@@ -223,11 +224,7 @@ export function renderHomePage() {
           </div>
         </section>
 
-        <footer class="footer">
-          <img src="/images/icon.png" alt="LoveAll Club" class="footer-logo" />
-          <p class="footer-text">Organised by <span class="footer-brand">LoveAll Club</span></p>
-          <p class="footer-copyright">© ${new Date().getFullYear()} LoveAll Club</p>
-        </footer>
+        ${renderFooter()}
       </div>
     </div>
   `;

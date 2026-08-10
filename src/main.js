@@ -8,6 +8,7 @@ import { renderNavbar, initNavbar } from './components/navbar.js';
 import { renderHomePage, initHomePage } from './pages/home.js';
 import { renderSchedulePage, initSchedulePage } from './pages/schedule.js';
 import { renderAdminPage, initAdminPage } from './pages/admin.js';
+import { renderPrivacyPage, renderTermsPage, initPrivacyPage, initTermsPage } from './pages/legal.js';
 import { animatePageEnter } from './motion.js';
 
 // Expose navbar module globally for admin page's re-render trick
@@ -18,7 +19,9 @@ const app = document.getElementById('app');
 const routes = [
   { path: '/', name: 'home', render: renderHomePage, init: initHomePage },
   { path: '/schedule', name: 'schedule', render: renderSchedulePage, init: initSchedulePage },
-  { path: '/admin', name: 'admin', render: renderAdminPage, init: initAdminPage }
+  { path: '/admin', name: 'admin', render: renderAdminPage, init: initAdminPage },
+  { path: '/privacy', name: 'privacy', render: renderPrivacyPage, init: initPrivacyPage, hideNavbar: true },
+  { path: '/terms', name: 'terms', render: renderTermsPage, init: initTermsPage, hideNavbar: true }
 ];
 
 const router = new Router(routes, '/');
@@ -26,11 +29,13 @@ const router = new Router(routes, '/');
 function renderPage(route) {
   if (!route) return;
 
-  const navbarHtml = renderNavbar(route.path);
+  const navbarHtml = route.hideNavbar ? '' : renderNavbar(route.path);
   const pageHtml = route.render();
   app.innerHTML = navbarHtml + pageHtml;
 
-  initNavbar();
+  if (!route.hideNavbar) {
+    initNavbar();
+  }
 
   if (route.init) {
     route.init();

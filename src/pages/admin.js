@@ -7,6 +7,7 @@ import { showModal, closeModal, showConfirm, showToast } from '../components/mod
 import { renderGroupStandings } from '../components/groupTable.js';
 import { renderMatchCard } from '../components/matchCard.js';
 import { renderBracket } from '../components/bracket.js';
+import { renderFooter } from '../components/footer.js';
 
 let isAuthenticated = sessionStorage.getItem('loveall_admin') === '1';
 let currentCategory = 'mens-singles';
@@ -54,11 +55,7 @@ export function renderAdminPage() {
           ${renderAdminContent(currentCategory)}
         </div>
 
-        <footer class="footer">
-          <img src="/images/icon.png" alt="LoveAll Club" class="footer-logo" />
-          <p class="footer-text">Organised by <span class="footer-brand">LoveAll Club</span></p>
-          <p class="footer-copyright">© ${new Date().getFullYear()} LoveAll Club</p>
-        </footer>
+        ${renderFooter()}
       </div>
     </div>
   `;
