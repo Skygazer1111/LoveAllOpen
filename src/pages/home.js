@@ -211,7 +211,7 @@ export function renderHomePage() {
           <div class="section-intro">
             <p class="eyebrow">Contact</p>
             <h2 class="section-heading">Talk to the organiser</h2>
-            <p class="section-copy">Message Priyan on WhatsApp — your number stays private on this site.</p>
+            <p class="section-copy">Message on WhatsApp for any queries.</p>
           </div>
           <div class="contact-list contact-list-single">
             <a href="/api/wa/priyan" target="_blank" rel="noopener noreferrer" class="contact-link">
