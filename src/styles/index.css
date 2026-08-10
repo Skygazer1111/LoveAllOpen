@@ -67,6 +67,7 @@
 
   --navbar-height: 72px;
   --max-width: 1120px;
+  --max-width-wide: 1480px;
   --shadow-soft: 0 18px 40px rgba(16, 36, 26, 0.08);
 }
 
@@ -309,6 +310,7 @@ h1, h2, h3, h4 {
 
 /* ----- Page ----- */
 .page {
+  position: relative;
   padding-top: 0;
   min-height: 100vh;
 }
@@ -317,11 +319,15 @@ h1, h2, h3, h4 {
   padding-top: var(--space-2xl);
 }
 .page-content {
+  position: relative;
+  z-index: 1;
   max-width: var(--max-width);
   margin: 0 auto;
   padding: var(--space-2xl) var(--space-lg);
 }
 .page-hero {
+  position: relative;
+  z-index: 1;
   padding: calc(var(--navbar-height) + var(--space-3xl)) var(--space-lg) var(--space-2xl);
   background:
     linear-gradient(135deg, rgba(31, 107, 69, 0.08), transparent 50%),
@@ -1532,6 +1538,153 @@ h1, h2, h3, h4 {
 .prizes-grid, .info-bar, .category-grid, .contact-grid {
   display: grid;
   gap: 14px;
+}
+
+/* ----- Desktop wide layout (keeps mobile breakpoints untouched) ----- */
+@media (min-width: 1100px) {
+  :root {
+    --max-width: var(--max-width-wide);
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 42% 55% at 0% 18%, rgba(214, 239, 74, 0.28), transparent 70%),
+      radial-gradient(ellipse 40% 50% at 100% 12%, rgba(31, 107, 69, 0.16), transparent 68%),
+      radial-gradient(ellipse 36% 40% at 100% 70%, rgba(228, 87, 46, 0.07), transparent 70%),
+      radial-gradient(ellipse 34% 38% at 0% 78%, rgba(47, 143, 91, 0.1), transparent 72%),
+      linear-gradient(180deg, #f1f5f0 0%, var(--paper) 42%, #eaf0eb 100%);
+  }
+
+  .page::before,
+  .page::after {
+    content: '';
+    position: fixed;
+    top: 18vh;
+    bottom: 12vh;
+    width: max(0px, calc((100vw - var(--max-width-wide)) / 2 - 28px));
+    max-width: 112px;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 28px;
+    opacity: 0;
+  }
+
+  .page::before {
+    left: 16px;
+    background:
+      linear-gradient(180deg, rgba(214, 239, 74, 0.4), rgba(31, 107, 69, 0.1) 55%, transparent),
+      repeating-linear-gradient(
+        180deg,
+        rgba(16, 36, 26, 0.06) 0 2px,
+        transparent 2px 28px
+      );
+    border: 1px solid rgba(31, 107, 69, 0.12);
+  }
+
+  .page::after {
+    right: 16px;
+    background:
+      linear-gradient(180deg, rgba(31, 107, 69, 0.2), rgba(214, 239, 74, 0.22) 50%, transparent),
+      repeating-linear-gradient(
+        180deg,
+        rgba(16, 36, 26, 0.06) 0 2px,
+        transparent 2px 28px
+      );
+    border: 1px solid rgba(31, 107, 69, 0.12);
+  }
+
+  .navbar-inner,
+  .page-content,
+  .page-hero-inner,
+  .hero-content {
+    max-width: var(--max-width-wide);
+  }
+
+  .page-content {
+    padding-left: clamp(24px, 3vw, 48px);
+    padding-right: clamp(24px, 3vw, 48px);
+  }
+
+  .section-intro {
+    max-width: 48rem;
+  }
+
+  .event-strip-grid > div {
+    padding: 32px 28px;
+  }
+
+  .countdown-panel {
+    padding: 42px 44px;
+    gap: 36px;
+  }
+
+  .countdown-unit {
+    min-height: 112px;
+  }
+
+  .countdown-value {
+    font-size: clamp(2rem, 2.4vw, 2.6rem);
+  }
+
+  .venue-layout {
+    grid-template-columns: 1.55fr 0.85fr;
+    gap: 36px;
+  }
+
+  .venue-map-wrap,
+  .venue-map {
+    min-height: 420px;
+  }
+
+  .category-row {
+    padding: 28px 8px;
+  }
+
+  .fixtures-teaser-inner {
+    padding: 44px 48px;
+  }
+
+  .format-timeline {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .format-timeline li {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.55);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .reward-list {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+
+  .contact-list-single {
+    grid-template-columns: minmax(280px, 420px);
+  }
+
+  .detail-rail {
+    gap: 28px;
+  }
+}
+
+@media (min-width: 1500px) {
+  :root {
+    --max-width-wide: 1600px;
+  }
+}
+
+@media (min-width: 1560px) {
+  .page::before,
+  .page::after {
+    opacity: 1;
+  }
 }
 
 /* ----- Responsive ----- */
