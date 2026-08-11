@@ -125,16 +125,12 @@ export function renderHomePage() {
           <div class="section-intro">
             <p class="eyebrow">Categories</p>
             <h2 class="section-heading">Three ways to play</h2>
-            <p class="section-copy">Pick your event — fees listed below.</p>
+            <p class="section-copy">Men's singles, men's doubles, and mixed doubles.</p>
           </div>
           <div class="category-list" data-stagger>
             ${cats.map(cat => `
               <div class="category-row">
-                <div>
-                  <h3>${cat.name}</h3>
-                  <p class="muted">${cat.feeLabel}</p>
-                </div>
-                <div class="category-fee">₹${cat.fee}</div>
+                <h3>${cat.name}</h3>
               </div>
             `).join('')}
           </div>
