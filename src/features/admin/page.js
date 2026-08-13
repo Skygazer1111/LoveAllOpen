@@ -33,8 +33,8 @@ export function renderAdminPage() {
       <div class="page-content">
         <div class="admin-toolbar">
           <div class="admin-toolbar-actions">
-            <button class="btn btn-outline btn-sm" id="btn-export-data">Export</button>
-            <button class="btn btn-outline btn-sm" id="btn-import-data">Import</button>
+            <button class="btn btn-outline btn-sm" id="btn-export-data">Export PDF</button>
+            <button class="btn btn-outline btn-sm" id="btn-import-data">Import JSON</button>
             <button class="btn btn-danger btn-sm" id="btn-reset-data">Reset all</button>
           </div>
           <p class="live-sync-status" id="live-sync-status">Publishing live board…</p>
@@ -827,16 +827,15 @@ export function initAdminPage() {
   // Toolbar buttons
   const exportBtn = document.getElementById('btn-export-data');
   if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-      const data = store.exportData();
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `loveall_tournament_${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Data exported!', 'success');
+    exportBtn.addEventListener('click', async () => {
+      try {
+        const { downloadParticipantsPdf } = await import('./export-pdf.js');
+        const filename = downloadParticipantsPdf();
+        showToast(`Downloaded ${filename}`, 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Could not create PDF', 'error');
+      }
     });
   }
 
