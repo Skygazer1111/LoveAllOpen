@@ -136,15 +136,19 @@ class Store {
     return this._data;
   }
 
-  replaceData(data) {
+  replaceData(data, { silent = false } = {}) {
     if (!data?.categories || !data?.settings) return false;
+    // Keep settings numbers typed correctly after JSON round-trips
+    if (data.settings.courts != null) {
+      data.settings.courts = parseInt(data.settings.courts, 10) || data.settings.courts;
+    }
     this._data = data;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
     } catch (e) {
       console.error('Failed to save store data:', e);
     }
-    this.emit('change');
+    if (!silent) this.emit('change');
     return true;
   }
 
@@ -165,7 +169,12 @@ class Store {
   }
 
   updateSettings(updates) {
-    Object.assign(this._data.settings, updates);
+    const next = { ...updates };
+    if (next.courts !== undefined) {
+      const n = parseInt(next.courts, 10);
+      next.courts = Number.isFinite(n) && n > 0 ? n : 2;
+    }
+    Object.assign(this._data.settings, next);
     this.save();
     this.emit('change');
   }

@@ -414,7 +414,10 @@ function refreshAdminContent() {
 function bindSettingsEvents() {
   const saveBtn = document.getElementById('btn-save-settings');
   if (!saveBtn) return;
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
+    const courtsRaw = document.getElementById('setting-courts')?.value;
+    const courts = parseInt(courtsRaw, 10);
+
     store.updateSettings({
       tournamentName: document.getElementById('setting-name')?.value?.trim() || '',
       level: document.getElementById('setting-level')?.value?.trim() || '',
@@ -423,10 +426,22 @@ function bindSettingsEvents() {
       venueShort: document.getElementById('setting-venue-short')?.value?.trim() || '',
       venue: document.getElementById('setting-venue')?.value?.trim() || '',
       shuttles: document.getElementById('setting-shuttles')?.value?.trim() || '',
-      courts: parseInt(document.getElementById('setting-courts')?.value || '2', 10) || 2,
+      courts: Number.isFinite(courts) && courts > 0 ? courts : 2,
       mapsQuery: document.getElementById('setting-maps')?.value?.trim() || ''
     });
-    showToast('Event details saved', 'success');
+
+    // Keep the form in sync with what was actually stored
+    const saved = store.getSettings();
+    const courtsInput = document.getElementById('setting-courts');
+    if (courtsInput) courtsInput.value = String(saved.courts ?? 2);
+
+    const ok = await publishTournament(store.getData());
+    const status = document.getElementById('live-sync-status');
+    if (status) {
+      status.textContent = ok ? 'Live board published' : 'Saved on this device — live board not connected';
+      status.classList.toggle('is-live', ok);
+    }
+    showToast(ok ? 'Event details saved & published' : 'Event details saved on this device', 'success');
   });
 }
 
@@ -909,15 +924,16 @@ function bindAdminSync() {
   onAdminChange = () => {
     clearTimeout(publishTimer);
     publishTimer = setTimeout(async () => {
-      const ok = await publishTournament();
+      const ok = await publishTournament(store.getData());
       const status = document.getElementById('live-sync-status');
       if (status) {
         status.textContent = ok ? 'Live board published' : 'Saved on this device — live board not connected';
         status.classList.toggle('is-live', ok);
       }
-    }, 350);
+    }, 400);
   };
   store.on('change', onAdminChange);
+  // Admin is writer-only — never pull remote over local edits
   startLiveSync({ isAdmin: true });
   onAdminChange();
 }

@@ -59,10 +59,14 @@ const initialPath = window.location.hash.slice(1) || '/';
 const initialRoute = routes.find(r => r.path === initialPath) || routes[0];
 renderPage(initialRoute);
 
-pullRemoteTournament().then((updated) => {
-  if (updated) {
-    const path = window.location.hash.slice(1) || '/';
-    const route = routes.find(r => r.path === path) || routes[0];
-    renderPage(route);
-  }
-});
+// Public pages may pull the live board. Skip while admin is logged in
+// so a stale remote never overwrites a fresh admin save.
+if (sessionStorage.getItem('loveall_admin') !== '1') {
+  pullRemoteTournament().then((updated) => {
+    if (updated && sessionStorage.getItem('loveall_admin') !== '1') {
+      const path = window.location.hash.slice(1) || '/';
+      const route = routes.find(r => r.path === path) || routes[0];
+      renderPage(route);
+    }
+  });
+}
