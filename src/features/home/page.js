@@ -127,20 +127,58 @@ export function renderHomePage() {
           </div>
         </section>
 
-        <section class="section fixtures-teaser" data-reveal>
-          <div class="fixtures-teaser-inner">
-            <div>
-              <p class="eyebrow">Fixtures</p>
-              <h2 class="section-heading">Match schedule goes live here</h2>
-              <p class="section-copy">
-                ${liveCount > 0
-                  ? `${liveCount} match${liveCount === 1 ? '' : 'es'} live right now — scores update as play happens.`
-                  : upcomingCount > 0
-                    ? `${upcomingCount} fixtures scheduled. Check the full board for groups and knockouts.`
-                    : 'Once the admin publishes the draw, every group match and knockout fixture appears on the schedule.'}
-              </p>
+        <section class="section fx-banner-section" data-reveal>
+          <div class="fx-banner ${liveCount > 0 ? 'is-live' : ''}">
+            <div class="fx-banner-grid" aria-hidden="true"></div>
+            <div class="fx-banner-board" aria-hidden="true">
+              <div class="fx-tile fx-tile-a">
+                <span class="fx-tile-meta">Court 1</span>
+                <span class="fx-tile-vs">VS</span>
+                <span class="fx-tile-meta">${liveCount > 0 ? 'Live' : 'Next'}</span>
+              </div>
+              <div class="fx-tile fx-tile-b">
+                <span class="fx-tile-meta">Group A</span>
+                <span class="fx-tile-vs">VS</span>
+                <span class="fx-tile-meta">Q1</span>
+              </div>
+              <div class="fx-tile fx-tile-c">
+                <span class="fx-tile-meta">Semi</span>
+                <span class="fx-tile-vs">VS</span>
+                <span class="fx-tile-meta">Final</span>
+              </div>
             </div>
-            <a href="#/schedule" class="btn btn-accent btn-lg">Open schedule</a>
+            <div class="fx-banner-body">
+              <div class="fx-banner-copy">
+                <p class="fx-banner-eyebrow">
+                  ${liveCount > 0
+                    ? `<span class="fx-live-dot" aria-hidden="true"></span> Live board`
+                    : `<span class="fx-mark" aria-hidden="true"></span> Fixtures`}
+                </p>
+                <h2 class="fx-banner-title">
+                  ${liveCount > 0
+                    ? 'Matches are live — follow every score'
+                    : upcomingCount > 0
+                      ? 'The draw is up — check your matches'
+                      : 'Match schedule goes live here'}
+                </h2>
+                <p class="fx-banner-text">
+                  ${liveCount > 0
+                    ? `${liveCount} match${liveCount === 1 ? '' : 'es'} live right now — times, courts, and results update as play happens.`
+                    : upcomingCount > 0
+                      ? `${upcomingCount} fixtures scheduled. Open the board for groups, times, and knockouts.`
+                      : 'Once the admin publishes the draw, every group match and knockout fixture appears on the schedule.'}
+                </p>
+              </div>
+              <a href="#/schedule" class="fx-banner-cta">
+                <span class="fx-banner-cta-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+                    <path d="M3 9h18M8 4v4M16 4v4"></path>
+                  </svg>
+                </span>
+                Open schedule
+              </a>
+            </div>
           </div>
         </section>
 

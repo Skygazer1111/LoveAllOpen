@@ -748,18 +748,186 @@ h1, h2, h3, h4 {
   color: var(--forest);
 }
 
-/* ----- Fixtures teaser ----- */
-.fixtures-teaser-inner {
+/* ----- Fixtures banner ----- */
+.fx-banner-section {
+  margin-top: 4px;
+}
+.fx-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  min-height: 220px;
+  background:
+    radial-gradient(90% 80% at 100% 10%, rgba(228, 87, 46, 0.14), transparent 55%),
+    radial-gradient(70% 60% at 0% 100%, rgba(214, 239, 74, 0.45), transparent 50%),
+    linear-gradient(135deg, #eef6d6 0%, #f7f8f5 42%, #e7eee8 100%);
+  border: 1px solid rgba(31, 107, 69, 0.16);
+  box-shadow: var(--shadow-soft);
+}
+.fx-banner.is-live {
+  background:
+    radial-gradient(90% 80% at 100% 10%, rgba(228, 87, 46, 0.22), transparent 55%),
+    radial-gradient(70% 60% at 0% 100%, rgba(214, 239, 74, 0.4), transparent 50%),
+    linear-gradient(135deg, #f3e6df 0%, #f7f8f5 45%, #eef3ef 100%);
+  border-color: rgba(228, 87, 46, 0.28);
+}
+.fx-banner-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(31, 107, 69, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 107, 69, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+}
+.fx-banner-board {
+  position: absolute;
+  right: clamp(10px, 3.5vw, 32px);
+  top: 50%;
+  transform: translateY(-50%) rotate(-7deg);
+  width: min(210px, 36vw);
+  height: 168px;
+  pointer-events: none;
+}
+.fx-tile {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 150px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(16, 36, 26, 0.1);
+  box-shadow: 0 14px 28px rgba(16, 36, 26, 0.12);
+  display: grid;
+  gap: 6px;
+  backdrop-filter: blur(6px);
+}
+.fx-tile-meta {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+.fx-tile-vs {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.12em;
+}
+.fx-tile-a {
+  transform: translate(0, 8px) rotate(-6deg);
+  animation: fx-tile-float 5.8s ease-in-out infinite;
+}
+.fx-tile-b {
+  transform: translate(28px, -4px) rotate(3deg);
+  background: rgba(214, 239, 74, 0.78);
+  animation: fx-tile-float 6.4s ease-in-out infinite reverse;
+  animation-delay: -1s;
+}
+.fx-tile-c {
+  transform: translate(48px, 36px) rotate(9deg);
+  background: rgba(16, 36, 26, 0.92);
+  border-color: transparent;
+  animation: fx-tile-float 7.2s ease-in-out infinite;
+  animation-delay: -2.2s;
+}
+.fx-tile-c .fx-tile-meta { color: var(--court); }
+.fx-tile-c .fx-tile-vs { color: #fff; }
+.fx-banner.is-live .fx-tile-a .fx-tile-meta:last-child {
+  color: var(--coral);
+}
+.fx-banner-body {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 28px;
-  padding: 36px;
-  border-radius: var(--radius-xl);
-  background:
-    linear-gradient(135deg, rgba(214, 239, 74, 0.55), rgba(47, 143, 91, 0.18)),
-    var(--surface);
-  border: 1px solid rgba(31, 107, 69, 0.15);
+  padding: 36px 40px;
+  max-width: calc(100% - min(230px, 38vw));
+}
+.fx-banner-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--forest);
+  margin-bottom: 10px;
+}
+.fx-banner.is-live .fx-banner-eyebrow {
+  color: var(--coral);
+}
+.fx-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--forest);
+  transform: rotate(45deg);
+}
+.fx-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 0 4px rgba(228, 87, 46, 0.18);
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+.fx-banner-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 3.4vw, 2.45rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.fx-banner-text {
+  color: var(--text-secondary);
+  font-size: 1.02rem;
+  max-width: 40ch;
+  line-height: 1.55;
+}
+.fx-banner-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 14px;
+  background: var(--coral);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  box-shadow: 0 12px 28px rgba(228, 87, 46, 0.28);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+.fx-banner-cta:hover {
+  transform: translateY(-2px);
+  background: var(--coral-deep);
+  color: #fff;
+}
+.fx-banner-cta-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@keyframes fx-tile-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -7px; }
 }
 
 /* ----- Format / rewards / contact ----- */
@@ -1912,10 +2080,7 @@ h1, h2, h3, h4 {
     padding: 28px 8px;
   }
 
-  .fixtures-teaser-inner {
-    padding: 44px 48px;
-  }
-
+  .fx-banner-body,
   .ig-banner-body {
     padding: 42px 48px;
   }
@@ -1974,11 +2139,7 @@ h1, h2, h3, h4 {
   .countdown-panel {
     grid-template-columns: 1fr;
   }
-  .fixtures-teaser-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
+  .fx-banner-body,
   .ig-banner-body {
     flex-direction: column;
     align-items: flex-start;
@@ -2195,23 +2356,25 @@ h1, h2, h3, h4 {
     font-size: 1.7rem;
   }
 
-  .fixtures-teaser-inner {
-    padding: 24px 18px;
-    width: 100%;
-  }
-
-  .fixtures-teaser-inner .btn {
-    width: 100%;
-  }
-
+  .fx-banner,
   .ig-banner {
     min-height: 0;
   }
 
+  .fx-banner-body,
   .ig-banner-body {
     max-width: 100%;
     padding: 24px 20px 28px;
     gap: 20px;
+  }
+
+  .fx-banner-board {
+    position: absolute;
+    right: -6px;
+    top: 16px;
+    transform: rotate(-8deg) scale(0.58);
+    transform-origin: top right;
+    opacity: 0.5;
   }
 
   .ig-banner-film {
@@ -2223,6 +2386,7 @@ h1, h2, h3, h4 {
     opacity: 0.55;
   }
 
+  .fx-banner-cta,
   .ig-banner-cta {
     width: 100%;
     justify-content: center;
