@@ -241,7 +241,7 @@ export function renderHomePage() {
 
         <section class="section ig-banner-section" data-reveal>
           <div class="ig-banner">
-            <div class="ig-banner-glow" aria-hidden="true"></div>
+            <div class="ig-banner-grid" aria-hidden="true"></div>
             <div class="ig-banner-film" aria-hidden="true">
               <span class="ig-frame ig-frame-a"></span>
               <span class="ig-frame ig-frame-b"></span>
@@ -250,7 +250,7 @@ export function renderHomePage() {
             <div class="ig-banner-body">
               <div class="ig-banner-copy">
                 <p class="ig-banner-eyebrow">
-                  <span class="ig-dot" aria-hidden="true"></span>
+                  <span class="ig-mark" aria-hidden="true"></span>
                   Stories from the court
                 </p>
                 <h2 class="ig-banner-title">Follow LoveAll on Instagram</h2>
