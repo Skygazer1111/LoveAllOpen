@@ -243,9 +243,29 @@ export function renderHomePage() {
           <div class="ig-banner">
             <div class="ig-banner-grid" aria-hidden="true"></div>
             <div class="ig-banner-film" aria-hidden="true">
-              <span class="ig-frame ig-frame-a"></span>
-              <span class="ig-frame ig-frame-b"></span>
-              <span class="ig-frame ig-frame-c"></span>
+              <div class="ig-frame ig-frame-a">
+                <span class="ig-frame-glyph">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle cx="17.4" cy="6.6" r="0.9" fill="currentColor" stroke="none"></circle>
+                  </svg>
+                </span>
+              </div>
+              <div class="ig-frame ig-frame-b">
+                <span class="ig-frame-label">Stories</span>
+                <span class="ig-frame-ring"></span>
+              </div>
+              <div class="ig-frame ig-frame-c">
+                <span class="ig-frame-glyph ig-frame-glyph-light">
+                  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7">
+                    <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle cx="17.4" cy="6.6" r="0.9" fill="currentColor" stroke="none"></circle>
+                  </svg>
+                </span>
+                <span class="ig-frame-handle">@loveall</span>
+              </div>
             </div>
             <div class="ig-banner-body">
               <div class="ig-banner-copy">
