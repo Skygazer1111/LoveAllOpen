@@ -838,18 +838,171 @@ h1, h2, h3, h4 {
 }
 .contact-phone { color: var(--text-secondary); }
 
-/* ----- Instagram (matches fixtures teaser) ----- */
-.instagram-teaser-inner {
+/* ----- Instagram banner ----- */
+.ig-banner-section {
+  margin-top: 4px;
+}
+.ig-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(228, 87, 46, 0.22), transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, rgba(214, 239, 74, 0.18), transparent 50%),
+    linear-gradient(145deg, #163528 0%, #10241a 48%, #1a3326 100%);
+  border: 1px solid rgba(214, 239, 74, 0.18);
+  box-shadow:
+    0 24px 50px rgba(16, 36, 26, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  min-height: 220px;
+}
+.ig-banner-glow {
+  position: absolute;
+  inset: auto -20% -40% auto;
+  width: 55%;
+  height: 120%;
+  background: radial-gradient(circle, rgba(214, 239, 74, 0.16), transparent 68%);
+  pointer-events: none;
+  animation: ig-glow-drift 8s ease-in-out infinite alternate;
+}
+.ig-banner-film {
+  position: absolute;
+  right: clamp(12px, 4vw, 36px);
+  top: 50%;
+  transform: translateY(-50%) rotate(8deg);
+  width: min(200px, 34vw);
+  height: 170px;
+  pointer-events: none;
+}
+.ig-frame {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 40%),
+    repeating-linear-gradient(
+      -18deg,
+      rgba(214, 239, 74, 0.08) 0 10px,
+      transparent 10px 22px
+    ),
+    #1f6b45;
+}
+.ig-frame::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(214, 239, 74, 0.35), transparent 45%),
+    linear-gradient(180deg, rgba(16, 36, 26, 0.15), rgba(16, 36, 26, 0.55));
+}
+.ig-frame-a {
+  transform: translate(-18px, 10px) rotate(-10deg);
+  background-color: #2f8f5b;
+  animation: ig-frame-float 5.5s ease-in-out infinite;
+}
+.ig-frame-b {
+  transform: translate(8px, -6px) rotate(4deg);
+  background-color: #c9431c;
+  animation: ig-frame-float 6.2s ease-in-out infinite reverse;
+  animation-delay: -1.2s;
+}
+.ig-frame-c {
+  transform: translate(22px, 18px) rotate(12deg);
+  background-color: #10241a;
+  border-color: rgba(214, 239, 74, 0.35);
+  animation: ig-frame-float 7s ease-in-out infinite;
+  animation-delay: -2.4s;
+}
+.ig-banner-body {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 28px;
-  padding: 36px;
-  border-radius: var(--radius-xl);
-  background:
-    linear-gradient(135deg, rgba(214, 239, 74, 0.55), rgba(47, 143, 91, 0.18)),
-    var(--surface);
-  border: 1px solid rgba(31, 107, 69, 0.15);
+  padding: 36px 40px;
+  max-width: calc(100% - min(220px, 36vw));
+}
+.ig-banner-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--court);
+  margin-bottom: 10px;
+}
+.ig-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 0 4px rgba(228, 87, 46, 0.2);
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+.ig-banner-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.7rem, 3.4vw, 2.45rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.ig-banner-text {
+  color: rgba(247, 248, 245, 0.72);
+  font-size: 1.02rem;
+  max-width: 38ch;
+  line-height: 1.55;
+}
+.ig-banner-text strong {
+  color: var(--court);
+  font-weight: 700;
+}
+.ig-banner-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 14px;
+  background: var(--court);
+  color: var(--ink);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  transition: transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+.ig-banner-cta:hover {
+  transform: translateY(-2px);
+  background: #fff;
+  color: var(--ink);
+}
+.ig-banner-cta-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(16, 36, 26, 0.12);
+}
+
+@keyframes ig-frame-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -8px; }
+}
+@keyframes ig-glow-drift {
+  from { transform: translate(0, 0) scale(1); opacity: 0.7; }
+  to { transform: translate(-8%, -4%) scale(1.08); opacity: 1; }
 }
 
 /* ----- Footer ----- */
@@ -1763,8 +1916,8 @@ h1, h2, h3, h4 {
     padding: 44px 48px;
   }
 
-  .instagram-teaser-inner {
-    padding: 44px 48px;
+  .ig-banner-body {
+    padding: 42px 48px;
   }
 
   .format-timeline {
@@ -1821,11 +1974,17 @@ h1, h2, h3, h4 {
   .countdown-panel {
     grid-template-columns: 1fr;
   }
-  .fixtures-teaser-inner,
-  .instagram-teaser-inner {
+  .fixtures-teaser-inner {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .ig-banner-body {
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 62%;
+  }
+
   .venue-map-wrap,
   .venue-map {
     min-height: 260px;
@@ -2036,15 +2195,37 @@ h1, h2, h3, h4 {
     font-size: 1.7rem;
   }
 
-  .fixtures-teaser-inner,
-  .instagram-teaser-inner {
+  .fixtures-teaser-inner {
     padding: 24px 18px;
     width: 100%;
   }
 
-  .fixtures-teaser-inner .btn,
-  .instagram-teaser-inner .btn {
+  .fixtures-teaser-inner .btn {
     width: 100%;
+  }
+
+  .ig-banner {
+    min-height: 0;
+  }
+
+  .ig-banner-body {
+    max-width: 100%;
+    padding: 24px 20px 28px;
+    gap: 20px;
+  }
+
+  .ig-banner-film {
+    position: absolute;
+    right: -8px;
+    top: 18px;
+    transform: rotate(10deg) scale(0.62);
+    transform-origin: top right;
+    opacity: 0.55;
+  }
+
+  .ig-banner-cta {
+    width: 100%;
+    justify-content: center;
   }
 
   .format-timeline li {

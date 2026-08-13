@@ -201,19 +201,42 @@ export function renderHomePage() {
           </div>
         </section>
 
-        <section class="section instagram-section" data-reveal>
-          <div class="instagram-teaser-inner">
-            <div>
-              <p class="eyebrow">Instagram</p>
-              <h2 class="section-heading">Follow us on Instagram</h2>
-              <p class="section-copy">@loveall_badminton — photos, updates, and match-day stories.</p>
+        <section class="section ig-banner-section" data-reveal>
+          <div class="ig-banner">
+            <div class="ig-banner-glow" aria-hidden="true"></div>
+            <div class="ig-banner-film" aria-hidden="true">
+              <span class="ig-frame ig-frame-a"></span>
+              <span class="ig-frame ig-frame-b"></span>
+              <span class="ig-frame ig-frame-c"></span>
             </div>
-            <a
-              class="btn btn-accent btn-lg"
-              href="https://www.instagram.com/loveall_badminton?utm_source=qr"
-              target="_blank"
-              rel="noopener noreferrer"
-            >Open Instagram</a>
+            <div class="ig-banner-body">
+              <div class="ig-banner-copy">
+                <p class="ig-banner-eyebrow">
+                  <span class="ig-dot" aria-hidden="true"></span>
+                  Stories from the court
+                </p>
+                <h2 class="ig-banner-title">Follow LoveAll on Instagram</h2>
+                <p class="ig-banner-text">
+                  Match-day clips, pairings, and behind-the-scenes from
+                  <strong>@loveall_badminton</strong>.
+                </p>
+              </div>
+              <a
+                class="ig-banner-cta"
+                href="https://www.instagram.com/loveall_badminton?utm_source=qr"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class="ig-banner-cta-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle cx="17.4" cy="6.6" r="0.85" fill="currentColor" stroke="none"></circle>
+                  </svg>
+                </span>
+                Follow @loveall_badminton
+              </a>
+            </div>
           </div>
         </section>
 
