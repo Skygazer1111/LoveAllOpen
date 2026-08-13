@@ -211,11 +211,11 @@ export function renderHomePage() {
               </svg>
             </span>
             <div class="instagram-copy">
-              <p class="eyebrow">Social</p>
-              <h2>Follow us on Instagram</h2>
+              <p class="eyebrow">Follow us</p>
+              <h2>Instagram</h2>
               <p>@loveall_badminton — photos, updates, and match-day stories.</p>
             </div>
-            <span class="instagram-cta">Open Instagram</span>
+            <span class="instagram-cta">Open profile →</span>
           </a>
         </section>
 

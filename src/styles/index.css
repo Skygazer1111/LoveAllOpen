@@ -839,59 +839,73 @@ h1, h2, h3, h4 {
 .contact-phone { color: var(--text-secondary); }
 
 /* ----- Instagram ----- */
+.instagram-section {
+  margin-top: 8px;
+}
 .instagram-card {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 22px;
   align-items: center;
-  padding: 28px 32px;
+  padding: 30px 34px;
   border-radius: var(--radius-xl);
-  background:
-    linear-gradient(135deg, rgba(214, 239, 74, 0.28), rgba(31, 107, 69, 0.16) 42%, var(--ink) 78%);
-  color: #fff;
-  border: 1px solid rgba(16, 36, 26, 0.2);
-  box-shadow: var(--shadow-soft);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  background: var(--surface);
+  color: var(--ink);
+  border: 2px solid var(--forest);
+  box-shadow:
+    0 0 0 6px rgba(31, 107, 69, 0.08),
+    var(--shadow-soft);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 .instagram-card:hover {
   transform: translateY(-3px);
-  color: #fff;
-  box-shadow: 0 22px 48px rgba(16, 36, 26, 0.16);
+  color: var(--ink);
+  border-color: var(--ink);
+  box-shadow:
+    0 0 0 8px rgba(214, 239, 74, 0.35),
+    0 22px 48px rgba(16, 36, 26, 0.12);
 }
 .instagram-icon {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   display: grid;
   place-items: center;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--ink);
   color: var(--court);
+  flex-shrink: 0;
 }
 .instagram-copy .eyebrow {
-  color: var(--court);
+  color: var(--forest);
+  font-weight: 800;
 }
 .instagram-copy h2 {
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-size: clamp(1.55rem, 3vw, 2.05rem);
   margin: 6px 0 8px;
   letter-spacing: -0.03em;
-  color: #fff;
+  color: var(--ink);
 }
 .instagram-copy p {
-  color: rgba(255, 255, 255, 0.68);
-  max-width: 36ch;
+  color: var(--text-secondary);
+  max-width: 40ch;
+  font-size: 1.02rem;
 }
 .instagram-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 999px;
-  background: var(--court);
-  color: var(--ink);
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 14px;
+  background: var(--forest);
+  color: #fff;
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(31, 107, 69, 0.25);
+}
+.instagram-card:hover .instagram-cta {
+  background: var(--ink);
 }
 
 /* ----- Footer ----- */
@@ -2110,10 +2124,17 @@ h1, h2, h3, h4 {
     grid-template-columns: 1fr;
     padding: 22px 18px;
     gap: 16px;
+    border-width: 2px;
+  }
+
+  .instagram-icon {
+    width: 52px;
+    height: 52px;
   }
 
   .instagram-cta {
     width: 100%;
+    min-height: 48px;
   }
 
   .winner-pick {
