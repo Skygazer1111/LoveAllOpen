@@ -8,6 +8,21 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 }
 
+/** Display name for singles (name) or doubles (player1 & player2). */
+export function getParticipantDisplayName(participant, fallback = 'TBD') {
+  if (!participant) return fallback;
+  if (participant.player1 || participant.player2) {
+    const a = (participant.player1 || '').trim();
+    const b = (participant.player2 || '').trim();
+    if (a && b) return `${a} & ${b}`;
+    return a || b || fallback;
+  }
+  if (participant.name) return participant.name;
+  // Legacy entries that still have a team name
+  if (participant.teamName) return participant.teamName;
+  return fallback;
+}
+
 function createMatch(matchNumber, player1Id, player2Id) {
   return {
     id: generateId(),

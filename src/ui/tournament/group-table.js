@@ -2,7 +2,7 @@
  * Group Standings Table Component
  */
 
-import { store } from '../../data/store.js';
+import { store, getParticipantDisplayName } from '../../data/store.js';
 
 export function renderGroupStandings(categoryId, groupId, qualifyCount = 2) {
   const standings = store.getGroupStandings(categoryId, groupId);
@@ -17,7 +17,7 @@ export function renderGroupStandings(categoryId, groupId, qualifyCount = 2) {
         <thead>
           <tr>
             <th class="rank-cell">#</th>
-            <th>Player / Team</th>
+            <th>Player / Pair</th>
             <th class="score-cell">P</th>
             <th class="score-cell">W</th>
             <th class="score-cell">L</th>
@@ -30,7 +30,7 @@ export function renderGroupStandings(categoryId, groupId, qualifyCount = 2) {
         <tbody>
           ${standings.map((s, idx) => {
             const p = store.getParticipantById(categoryId, s.participantId);
-            const name = p ? (p.teamName || p.name) : 'Unknown';
+            const name = getParticipantDisplayName(p, 'Unknown');
             const isQualified = idx < qualifyCount;
 
             return `

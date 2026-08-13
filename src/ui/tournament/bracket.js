@@ -2,7 +2,7 @@
  * Knockout Bracket Component
  */
 
-import { store } from '../../data/store.js';
+import { store, getParticipantDisplayName } from '../../data/store.js';
 import { renderMatchMeta } from './match-card.js';
 
 export function renderBracket(categoryId, isAdmin = false) {
@@ -26,8 +26,8 @@ export function renderBracket(categoryId, isAdmin = false) {
             ${round.matches.map(match => {
               const p1 = match.player1Id ? store.getParticipantById(categoryId, match.player1Id) : null;
               const p2 = match.player2Id ? store.getParticipantById(categoryId, match.player2Id) : null;
-              const name1 = p1 ? (p1.teamName || p1.name) : 'TBD';
-              const name2 = p2 ? (p2.teamName || p2.name) : 'TBD';
+              const name1 = getParticipantDisplayName(p1);
+              const name2 = getParticipantDisplayName(p2);
               const p1Winner = match.status === 'completed' && match.winner === match.player1Id;
               const p2Winner = match.status === 'completed' && match.winner === match.player2Id;
               const when = renderMatchMeta(match);

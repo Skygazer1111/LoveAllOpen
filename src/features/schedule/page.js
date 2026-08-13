@@ -2,7 +2,7 @@
  * Schedule Page — Public fixtures & results
  */
 
-import { store } from '../../data/store.js';
+import { store, getParticipantDisplayName } from '../../data/store.js';
 import { startLiveSync } from '../../data/sync.js';
 import { renderGroupStandings } from '../../ui/tournament/group-table.js';
 import { renderMatchCard } from '../../ui/tournament/match-card.js';
@@ -118,7 +118,7 @@ function renderScheduleContent(categoryId) {
     html += `
       <section class="section champion-banner" data-reveal>
         <p class="eyebrow">Champion</p>
-        <h2 class="section-heading">${champion.teamName || champion.name}</h2>
+        <h2 class="section-heading">${getParticipantDisplayName(champion)}</h2>
         <p class="section-copy">${cat.name} winner</p>
       </section>
     `;

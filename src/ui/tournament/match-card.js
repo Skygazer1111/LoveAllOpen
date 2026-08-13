@@ -2,7 +2,7 @@
  * Match Card Component
  */
 
-import { store, formatMatchTime } from '../../data/store.js';
+import { store, formatMatchTime, getParticipantDisplayName } from '../../data/store.js';
 
 export function renderMatchMeta(match) {
   const bits = [];
@@ -24,8 +24,8 @@ export function renderMatchCard(categoryId, match, options = {}) {
 
   const p1 = store.getParticipantById(categoryId, match.player1Id);
   const p2 = store.getParticipantById(categoryId, match.player2Id);
-  const name1 = p1 ? (p1.teamName || p1.name) : 'TBD';
-  const name2 = p2 ? (p2.teamName || p2.name) : 'TBD';
+  const name1 = getParticipantDisplayName(p1);
+  const name2 = getParticipantDisplayName(p2);
   const stageLabel = label || groupName;
   const when = renderMatchMeta(match);
 

@@ -2,7 +2,7 @@
  * Admin Page — Tournament Management Dashboard
  */
 
-import { store } from '../../data/store.js';
+import { store, getParticipantDisplayName } from '../../data/store.js';
 import { publishTournament, startLiveSync } from '../../data/sync.js';
 import { showModal, closeModal, showConfirm, showToast } from '../../ui/feedback/modal.js';
 import { renderGroupStandings } from '../../ui/tournament/group-table.js';
@@ -187,7 +187,7 @@ function renderParticipantsSection(categoryId, cat) {
         </div>
         <div class="admin-actions">
           <button class="btn btn-accent btn-sm" id="btn-add-participant">
-            <i class='bx bx-plus'></i> Add ${isSingles ? 'Player' : 'Team'}
+            <i class='bx bx-plus'></i> Add ${isSingles ? 'Player' : 'Pair'}
           </button>
         </div>
       </div>
@@ -195,8 +195,8 @@ function renderParticipantsSection(categoryId, cat) {
       ${participants.length === 0 ? `
         <div class="empty-state" style="padding: var(--space-xl);">
           <div class="empty-state-icon"><i class='bx ${isSingles ? 'bx-user' : 'bx-group'}'></i></div>
-          <div class="empty-state-title">No ${isSingles ? 'Players' : 'Teams'} Yet</div>
-          <div class="empty-state-text">Click the button above to add ${isSingles ? 'players' : 'teams'} to ${cat.name}.</div>
+          <div class="empty-state-title">No ${isSingles ? 'Players' : 'Pairs'} Yet</div>
+          <div class="empty-state-text">Click the button above to add ${isSingles ? 'players' : 'pairs'} to ${cat.name}.</div>
         </div>
       ` : `
         <div class="participant-list">
@@ -205,10 +205,7 @@ function renderParticipantsSection(categoryId, cat) {
               <div class="participant-info">
                 <span class="participant-number">${idx + 1}.</span>
                 <div>
-                  <div class="participant-name">${p.teamName || p.name}</div>
-                  ${!isSingles && p.player1 ? `
-                    <div class="participant-detail">${p.player1} & ${p.player2 || '?'}</div>
-                  ` : ''}
+                  <div class="participant-name">${getParticipantDisplayName(p)}</div>
                 </div>
               </div>
               <button class="btn btn-icon btn-danger" onclick="window.removeParticipant('${categoryId}', '${p.id}')" title="Remove">
@@ -532,10 +529,6 @@ function openAddParticipantModal(categoryId) {
   } else {
     content = `
       <div class="input-group">
-        <label class="input-label">Team Name</label>
-        <input type="text" class="input" id="input-team-name" placeholder="Enter team name" />
-      </div>
-      <div class="input-group">
         <label class="input-label">Player 1</label>
         <input type="text" class="input" id="input-player1" placeholder="Enter player 1 name" />
       </div>
@@ -547,9 +540,9 @@ function openAddParticipantModal(categoryId) {
   }
 
   showModal({
-    title: `Add ${isSingles ? 'Player' : 'Team'} — ${cat.name}`,
+    title: `Add ${isSingles ? 'Player' : 'Pair'} — ${cat.name}`,
     content,
-    submitLabel: `Add ${isSingles ? 'Player' : 'Team'}`,
+    submitLabel: `Add ${isSingles ? 'Player' : 'Pair'}`,
     onSubmit: () => {
       if (isSingles) {
         const name = document.getElementById('input-player-name')?.value?.trim();
@@ -560,15 +553,14 @@ function openAddParticipantModal(categoryId) {
         store.addParticipant(categoryId, { name });
         showToast(`${name} added!`, 'success');
       } else {
-        const teamName = document.getElementById('input-team-name')?.value?.trim();
         const player1 = document.getElementById('input-player1')?.value?.trim();
         const player2 = document.getElementById('input-player2')?.value?.trim();
-        if (!teamName) {
-          showToast('Please enter a team name', 'error');
+        if (!player1 || !player2) {
+          showToast('Please enter both player names', 'error');
           return;
         }
-        store.addParticipant(categoryId, { teamName, player1, player2 });
-        showToast(`${teamName} added!`, 'success');
+        store.addParticipant(categoryId, { player1, player2 });
+        showToast(`${player1} & ${player2} added!`, 'success');
       }
       closeModal();
       refreshAdminContent();
@@ -587,7 +579,7 @@ function getFixture(categoryId, stage, loc, matchId) {
 
 function playerName(categoryId, participantId, fallback) {
   const p = store.getParticipantById(categoryId, participantId);
-  return p ? (p.teamName || p.name) : fallback;
+  return getParticipantDisplayName(p, fallback);
 }
 
 function openBulkScheduleModal(categoryId) {
@@ -627,7 +619,7 @@ function openBulkScheduleModal(categoryId) {
 
 window.removeParticipant = function(categoryId, participantId) {
   const p = store.getParticipantById(categoryId, participantId);
-  const name = p ? (p.teamName || p.name) : 'this participant';
+  const name = getParticipantDisplayName(p, 'this participant');
   showConfirm({
     title: 'Remove Participant',
     message: `Are you sure you want to remove <strong>${name}</strong>?`,
