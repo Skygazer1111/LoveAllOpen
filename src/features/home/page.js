@@ -202,21 +202,19 @@ export function renderHomePage() {
         </section>
 
         <section class="section instagram-section" data-reveal>
-          <a class="instagram-card" href="https://www.instagram.com/loveall_badminton?utm_source=qr" target="_blank" rel="noopener noreferrer">
-            <span class="instagram-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7">
-                <rect x="3" y="3" width="18" height="18" rx="5"></rect>
-                <circle cx="12" cy="12" r="4"></circle>
-                <circle cx="17.4" cy="6.6" r="0.8" fill="currentColor" stroke="none"></circle>
-              </svg>
-            </span>
-            <div class="instagram-copy">
-              <p class="eyebrow">Follow us</p>
-              <h2>Instagram</h2>
-              <p>@loveall_badminton — photos, updates, and match-day stories.</p>
+          <div class="instagram-teaser-inner">
+            <div>
+              <p class="eyebrow">Instagram</p>
+              <h2 class="section-heading">Follow us on Instagram</h2>
+              <p class="section-copy">@loveall_badminton — photos, updates, and match-day stories.</p>
             </div>
-            <span class="instagram-cta">Open profile →</span>
-          </a>
+            <a
+              class="btn btn-accent btn-lg"
+              href="https://www.instagram.com/loveall_badminton?utm_source=qr"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Open Instagram</a>
+          </div>
         </section>
 
         ${renderFooter()}

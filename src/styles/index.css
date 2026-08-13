@@ -838,74 +838,18 @@ h1, h2, h3, h4 {
 }
 .contact-phone { color: var(--text-secondary); }
 
-/* ----- Instagram ----- */
-.instagram-section {
-  margin-top: 8px;
-}
-.instagram-card {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 22px;
-  align-items: center;
-  padding: 30px 34px;
+/* ----- Instagram (matches fixtures teaser) ----- */
+.instagram-teaser-inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 36px;
   border-radius: var(--radius-xl);
-  background: var(--surface);
-  color: var(--ink);
-  border: 2px solid var(--forest);
-  box-shadow:
-    0 0 0 6px rgba(31, 107, 69, 0.08),
-    var(--shadow-soft);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
-}
-.instagram-card:hover {
-  transform: translateY(-3px);
-  color: var(--ink);
-  border-color: var(--ink);
-  box-shadow:
-    0 0 0 8px rgba(214, 239, 74, 0.35),
-    0 22px 48px rgba(16, 36, 26, 0.12);
-}
-.instagram-icon {
-  width: 60px;
-  height: 60px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  background: var(--ink);
-  color: var(--court);
-  flex-shrink: 0;
-}
-.instagram-copy .eyebrow {
-  color: var(--forest);
-  font-weight: 800;
-}
-.instagram-copy h2 {
-  font-size: clamp(1.55rem, 3vw, 2.05rem);
-  margin: 6px 0 8px;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-}
-.instagram-copy p {
-  color: var(--text-secondary);
-  max-width: 40ch;
-  font-size: 1.02rem;
-}
-.instagram-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 0 20px;
-  border-radius: 14px;
-  background: var(--forest);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.92rem;
-  white-space: nowrap;
-  box-shadow: 0 8px 18px rgba(31, 107, 69, 0.25);
-}
-.instagram-card:hover .instagram-cta {
-  background: var(--ink);
+  background:
+    linear-gradient(135deg, rgba(214, 239, 74, 0.55), rgba(47, 143, 91, 0.18)),
+    var(--surface);
+  border: 1px solid rgba(31, 107, 69, 0.15);
 }
 
 /* ----- Footer ----- */
@@ -1819,6 +1763,10 @@ h1, h2, h3, h4 {
     padding: 44px 48px;
   }
 
+  .instagram-teaser-inner {
+    padding: 44px 48px;
+  }
+
   .format-timeline {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1873,7 +1821,8 @@ h1, h2, h3, h4 {
   .countdown-panel {
     grid-template-columns: 1fr;
   }
-  .fixtures-teaser-inner {
+  .fixtures-teaser-inner,
+  .instagram-teaser-inner {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -2087,12 +2036,14 @@ h1, h2, h3, h4 {
     font-size: 1.7rem;
   }
 
-  .fixtures-teaser-inner {
+  .fixtures-teaser-inner,
+  .instagram-teaser-inner {
     padding: 24px 18px;
     width: 100%;
   }
 
-  .fixtures-teaser-inner .btn {
+  .fixtures-teaser-inner .btn,
+  .instagram-teaser-inner .btn {
     width: 100%;
   }
 
@@ -2118,23 +2069,6 @@ h1, h2, h3, h4 {
   .contact-link {
     min-height: 72px;
     padding: 18px;
-  }
-
-  .instagram-card {
-    grid-template-columns: 1fr;
-    padding: 22px 18px;
-    gap: 16px;
-    border-width: 2px;
-  }
-
-  .instagram-icon {
-    width: 52px;
-    height: 52px;
-  }
-
-  .instagram-cta {
-    width: 100%;
-    min-height: 48px;
   }
 
   .winner-pick {
