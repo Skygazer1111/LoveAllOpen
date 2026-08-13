@@ -13,16 +13,7 @@ export function renderHomePage() {
   const categories = store.getCategories();
   const cats = Object.values(categories);
 
-  let liveCount = 0;
-  let upcomingCount = 0;
-  for (const cat of cats) {
-    for (const group of cat.groups || []) {
-      for (const m of group.matches || []) {
-        if (m.status === 'live') liveCount++;
-        if (m.status === 'upcoming') upcomingCount++;
-      }
-    }
-  }
+  const { live: liveCount, upcoming: upcomingCount } = store.countMatchStatuses();
 
   return `
     <div class="page" id="home-page">
@@ -208,6 +199,24 @@ export function renderHomePage() {
               <span class="contact-phone">Chat on WhatsApp</span>
             </a>
           </div>
+        </section>
+
+        <section class="section instagram-section" data-reveal>
+          <a class="instagram-card" href="https://www.instagram.com/loveall_badminton?utm_source=qr" target="_blank" rel="noopener noreferrer">
+            <span class="instagram-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7">
+                <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                <circle cx="12" cy="12" r="4"></circle>
+                <circle cx="17.4" cy="6.6" r="0.8" fill="currentColor" stroke="none"></circle>
+              </svg>
+            </span>
+            <div class="instagram-copy">
+              <p class="eyebrow">Social</p>
+              <h2>Follow us on Instagram</h2>
+              <p>@loveall_badminton — photos, updates, and match-day stories.</p>
+            </div>
+            <span class="instagram-cta">Open Instagram</span>
+          </a>
         </section>
 
         ${renderFooter()}

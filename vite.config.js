@@ -16,6 +16,74 @@ function readLocalWaPriyan(root) {
   }
 }
 
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function tournamentDevStore() {
+  return {
+    name: 'tournament-dev-store',
+    configureServer(server) {
+      const filePath = path.join(server.config.root, 'data', 'tournament.json');
+
+      server.middlewares.use(async (req, res, next) => {
+        const url = (req.url || '').split('?')[0];
+        if (url !== '/api/tournament' && url !== '/api/tournament/') {
+          return next();
+        }
+
+        const send = (code, body) => {
+          res.statusCode = code;
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-store');
+          res.end(JSON.stringify(body));
+        };
+
+        if (req.method === 'GET' || req.method === 'HEAD') {
+          try {
+            if (!fs.existsSync(filePath)) return send(200, { data: null, configured: true });
+            const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            return send(200, { data, configured: true });
+          } catch {
+            return send(200, { data: null, configured: true });
+          }
+        }
+
+        if (req.method === 'PUT' || req.method === 'POST') {
+          try {
+            const payload = await readJsonBody(req);
+            const data = payload.data;
+            if (!data?.categories || !data?.settings) {
+              return send(400, { error: 'Invalid tournament data' });
+            }
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
+            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+            return send(200, { ok: true });
+          } catch {
+            return send(400, { error: 'Invalid JSON' });
+          }
+        }
+
+        res.statusCode = 405;
+        res.setHeader('Allow', 'GET, HEAD, PUT, POST');
+        res.end('Method Not Allowed');
+      });
+    }
+  };
+}
+
 function whatsappDevRedirect() {
   return {
     name: 'whatsapp-dev-redirect',
@@ -55,5 +123,5 @@ export default defineConfig({
     open: true
   },
   publicDir: 'public',
-  plugins: [whatsappDevRedirect()]
+  plugins: [tournamentDevStore(), whatsappDevRedirect()]
 });

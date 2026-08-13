@@ -3,6 +3,7 @@
  */
 
 import { store } from '../../data/store.js';
+import { renderMatchMeta } from './match-card.js';
 
 export function renderBracket(categoryId, isAdmin = false) {
   const knockout = store.getKnockout(categoryId);
@@ -10,9 +11,8 @@ export function renderBracket(categoryId, isAdmin = false) {
   if (!knockout.rounds || knockout.rounds.length === 0) {
     return `
       <div class="empty-state">
-        <div class="empty-state-icon"><i class='bx bx-trophy'></i></div>
-        <div class="empty-state-title">No Knockout Stage Yet</div>
-        <div class="empty-state-text">The knockout bracket will appear here once generated from group stage results.</div>
+        <div class="empty-state-title">No knockout stage yet</div>
+        <div class="empty-state-text">The bracket appears here once group winners are through.</div>
       </div>
     `;
   }
@@ -30,9 +30,13 @@ export function renderBracket(categoryId, isAdmin = false) {
               const name2 = p2 ? (p2.teamName || p2.name) : 'TBD';
               const p1Winner = match.status === 'completed' && match.winner === match.player1Id;
               const p2Winner = match.status === 'completed' && match.winner === match.player2Id;
+              const when = renderMatchMeta(match);
+              const ready = match.player1Id && match.player2Id;
+              const ref = `'${categoryId}', 'knockout', ${roundIdx}, '${match.id}'`;
 
               return `
-                <div class="bracket-match" id="ko-match-${match.id}">
+                <div class="bracket-match ${match.status === 'live' ? 'is-live' : ''}" id="ko-match-${match.id}">
+                  ${when ? `<div class="bracket-match-when">${when}</div>` : ''}
                   <div class="bracket-player ${p1Winner ? 'winner' : ''}">
                     <span class="bracket-player-name ${!p1 ? 'tbd' : ''}">${name1}</span>
                     <span class="bracket-player-score">${match.score1 !== null ? match.score1 : ''}</span>
@@ -41,17 +45,18 @@ export function renderBracket(categoryId, isAdmin = false) {
                     <span class="bracket-player-name ${!p2 ? 'tbd' : ''}">${name2}</span>
                     <span class="bracket-player-score">${match.score2 !== null ? match.score2 : ''}</span>
                   </div>
-                  ${isAdmin && match.player1Id && match.player2Id && match.status !== 'completed' ? `
-                    <div style="padding: 6px 10px; border-top: 1px solid var(--border-subtle);">
-                      <button class="btn btn-sm btn-primary w-full" 
-                              onclick="window.openKnockoutScoreModal('${categoryId}', ${roundIdx}, '${match.id}')">
-                        Enter Score
-                      </button>
+                  ${isAdmin && ready && match.status !== 'completed' ? `
+                    <div class="bracket-match-actions">
+                      ${match.status === 'upcoming' ? `
+                        <button class="btn btn-sm btn-outline" onclick="window.setFixtureLive(${ref})">Live</button>
+                      ` : ''}
+                      <button class="btn btn-sm btn-outline" onclick="window.openScheduleModal(${ref})">Time</button>
+                      <button class="btn btn-sm btn-accent" onclick="window.openResultModal(${ref})">Winner</button>
                     </div>
                   ` : ''}
                   ${isAdmin && match.status === 'completed' ? `
-                    <div style="padding: 6px 10px; border-top: 1px solid var(--border-subtle); text-align: center;">
-                      <span class="badge badge-completed">✓ Complete</span>
+                    <div class="bracket-match-actions">
+                      <button class="btn btn-sm btn-outline" onclick="window.resetFixture(${ref})">Reset</button>
                     </div>
                   ` : ''}
                 </div>

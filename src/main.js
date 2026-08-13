@@ -14,6 +14,7 @@ import {
   initTermsPage
 } from './features/legal/page.js';
 import { animatePageEnter } from './ui/motion.js';
+import { pullRemoteTournament } from './data/sync.js';
 
 // Expose navbar for admin re-render after login
 window.__navbarModule = { renderNavbar, initNavbar };
@@ -57,3 +58,11 @@ router.onRouteChange((route) => {
 const initialPath = window.location.hash.slice(1) || '/';
 const initialRoute = routes.find(r => r.path === initialPath) || routes[0];
 renderPage(initialRoute);
+
+pullRemoteTournament().then((updated) => {
+  if (updated) {
+    const path = window.location.hash.slice(1) || '/';
+    const route = routes.find(r => r.path === path) || routes[0];
+    renderPage(route);
+  }
+});

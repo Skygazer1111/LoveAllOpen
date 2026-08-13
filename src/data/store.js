@@ -8,6 +8,75 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 }
 
+function createMatch(matchNumber, player1Id, player2Id) {
+  return {
+    id: generateId(),
+    matchNumber,
+    player1Id,
+    player2Id,
+    score1: null,
+    score2: null,
+    winner: null,
+    status: 'upcoming',
+    scheduledTime: '',
+    court: null
+  };
+}
+
+function parseOptionalScore(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function formatMatchTime(hhmm) {
+  if (!hhmm) return '';
+  const [h, m] = String(hhmm).split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return hhmm;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+export function addMinutesToTime(hhmm, mins) {
+  const [h, m] = String(hhmm || '09:00').split(':').map(Number);
+  const total = ((h || 0) * 60 + (m || 0) + mins + 24 * 60) % (24 * 60);
+  const hh = Math.floor(total / 60);
+  const mm = total % 60;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function applyMatchResult(match, { winnerId, score1, score2, allowDraw = false } = {}) {
+  const s1 = parseOptionalScore(score1);
+  const s2 = parseOptionalScore(score2);
+  let winner = undefined;
+
+  if (winnerId === null && allowDraw) {
+    winner = null;
+  } else if (winnerId) {
+    winner = winnerId;
+  } else if (s1 != null && s2 != null) {
+    if (s1 > s2) winner = match.player1Id;
+    else if (s2 > s1) winner = match.player2Id;
+    else if (allowDraw) winner = null;
+  }
+
+  if (winner === undefined) return false;
+
+  match.score1 = s1;
+  match.score2 = s2;
+  match.winner = winner;
+  match.status = 'completed';
+  return true;
+}
+
+function resetMatchResult(match) {
+  match.score1 = null;
+  match.score2 = null;
+  match.winner = null;
+  match.status = 'upcoming';
+}
+
 class Store {
   constructor() {
     this._listeners = {};
@@ -56,10 +125,27 @@ class Store {
 
   save() {
     try {
+      this._data.updatedAt = Date.now();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
     } catch (e) {
       console.error('Failed to save store data:', e);
     }
+  }
+
+  getData() {
+    return this._data;
+  }
+
+  replaceData(data) {
+    if (!data?.categories || !data?.settings) return false;
+    this._data = data;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));
+    } catch (e) {
+      console.error('Failed to save store data:', e);
+    }
+    this.emit('change');
+    return true;
   }
 
   reset() {
@@ -188,16 +274,7 @@ class Store {
 
       for (let i = 0; i < pIds.length; i++) {
         for (let j = i + 1; j < pIds.length; j++) {
-          matches.push({
-            id: generateId(),
-            matchNumber: matchNum++,
-            player1Id: pIds[i],
-            player2Id: pIds[j],
-            score1: null,
-            score2: null,
-            winner: null,
-            status: 'upcoming' // 'upcoming' | 'live' | 'completed'
-          });
+          matches.push(createMatch(matchNum++, pIds[i], pIds[j]));
         }
       }
 
@@ -212,53 +289,50 @@ class Store {
     return group ? group.matches : [];
   }
 
-  updateMatchScore(categoryId, groupId, matchId, score1, score2) {
+  _findGroupMatch(categoryId, groupId, matchId) {
     const cat = this._data.categories[categoryId];
-    if (!cat) return;
+    if (!cat) return null;
     const group = cat.groups.find(g => g.id === groupId);
-    if (!group) return;
+    if (!group) return null;
     const match = group.matches.find(m => m.id === matchId);
-    if (!match) return;
+    return match ? { cat, group, match } : null;
+  }
 
-    match.score1 = parseInt(score1);
-    match.score2 = parseInt(score2);
-    match.status = 'completed';
+  updateMatchScore(categoryId, groupId, matchId, score1, score2) {
+    this.completeGroupMatch(categoryId, groupId, matchId, { score1, score2 });
+  }
 
-    if (match.score1 > match.score2) {
-      match.winner = match.player1Id;
-    } else if (match.score2 > match.score1) {
-      match.winner = match.player2Id;
-    } else {
-      match.winner = null; // draw
-    }
+  completeGroupMatch(categoryId, groupId, matchId, { winnerId, score1, score2 } = {}) {
+    const found = this._findGroupMatch(categoryId, groupId, matchId);
+    if (!found) return false;
+    const { match } = found;
+    applyMatchResult(match, { winnerId, score1, score2, allowDraw: true });
+    this.save();
+    this.emit('change');
+    return true;
+  }
 
+  setMatchLive(categoryId, groupId, matchId) {
+    const found = this._findGroupMatch(categoryId, groupId, matchId);
+    if (!found || found.match.status === 'completed') return;
+    found.match.status = 'live';
     this.save();
     this.emit('change');
   }
 
-  setMatchLive(categoryId, groupId, matchId) {
-    const cat = this._data.categories[categoryId];
-    if (!cat) return;
-    const group = cat.groups.find(g => g.id === groupId);
-    if (!group) return;
-    const match = group.matches.find(m => m.id === matchId);
-    if (!match) return;
-    match.status = 'live';
+  updateMatchSchedule(categoryId, groupId, matchId, { scheduledTime, court } = {}) {
+    const found = this._findGroupMatch(categoryId, groupId, matchId);
+    if (!found) return;
+    if (scheduledTime !== undefined) found.match.scheduledTime = scheduledTime || '';
+    if (court !== undefined) found.match.court = court === '' || court == null ? null : parseInt(court, 10);
     this.save();
     this.emit('change');
   }
 
   resetMatch(categoryId, groupId, matchId) {
-    const cat = this._data.categories[categoryId];
-    if (!cat) return;
-    const group = cat.groups.find(g => g.id === groupId);
-    if (!group) return;
-    const match = group.matches.find(m => m.id === matchId);
-    if (!match) return;
-    match.score1 = null;
-    match.score2 = null;
-    match.winner = null;
-    match.status = 'upcoming';
+    const found = this._findGroupMatch(categoryId, groupId, matchId);
+    if (!found) return;
+    resetMatchResult(found.match);
     this.save();
     this.emit('change');
   }
@@ -357,16 +431,11 @@ class Store {
 
     // First round
     for (let i = 0; i < seeded.length; i += 2) {
-      currentMatches.push({
-        id: generateId(),
-        matchNumber: currentMatches.length + 1,
-        player1Id: seeded[i]?.participantId || null,
-        player2Id: seeded[i + 1]?.participantId || null,
-        score1: null,
-        score2: null,
-        winner: null,
-        status: 'upcoming'
-      });
+      currentMatches.push(createMatch(
+        currentMatches.length + 1,
+        seeded[i]?.participantId || null,
+        seeded[i + 1]?.participantId || null
+      ));
     }
 
     // Handle byes
@@ -396,16 +465,7 @@ class Store {
     while (numMatches >= 1) {
       const roundMatches = [];
       for (let i = 0; i < numMatches; i++) {
-        roundMatches.push({
-          id: generateId(),
-          matchNumber: i + 1,
-          player1Id: null,
-          player2Id: null,
-          score1: null,
-          score2: null,
-          winner: null,
-          status: 'upcoming'
-        });
+        roundMatches.push(createMatch(i + 1, null, null));
       }
       rounds.push({
         name: roundNames[roundIdx] || `Round ${roundIdx + 1}`,
@@ -417,6 +477,13 @@ class Store {
     }
 
     cat.knockout = { rounds };
+
+    currentMatches.forEach((match, matchIdx) => {
+      if (match.winner) {
+        this._placeWinnerInNextRound(cat, 0, matchIdx, match.winner);
+      }
+    });
+
     this.save();
     this.emit('change');
   }
@@ -450,42 +517,165 @@ class Store {
     return names;
   }
 
+  _findKnockoutMatch(categoryId, roundIndex, matchId) {
+    const cat = this._data.categories[categoryId];
+    if (!cat?.knockout?.rounds) return null;
+    const round = cat.knockout.rounds[roundIndex];
+    if (!round) return null;
+    const match = round.matches.find(m => m.id === matchId);
+    return match ? { cat, round, match, matchIdx: round.matches.indexOf(match) } : null;
+  }
+
+  _placeWinnerInNextRound(cat, roundIndex, matchIdx, winnerId) {
+    const nextRound = cat.knockout.rounds[roundIndex + 1];
+    if (!nextRound) return;
+    const nextMatchIdx = Math.floor(matchIdx / 2);
+    const next = nextRound.matches[nextMatchIdx];
+    if (!next) return;
+    const isFirst = matchIdx % 2 === 0;
+    const prevId = isFirst ? next.player1Id : next.player2Id;
+    if (isFirst) next.player1Id = winnerId;
+    else next.player2Id = winnerId;
+    if (prevId && prevId !== winnerId && next.status === 'completed') {
+      resetMatchResult(next);
+      this._cascadeClearFrom(cat, roundIndex + 1, nextMatchIdx);
+    }
+  }
+
+  _cascadeClearFrom(cat, roundIndex, matchIdx) {
+    const nextRound = cat.knockout.rounds[roundIndex + 1];
+    if (!nextRound) return;
+    const nextMatchIdx = Math.floor(matchIdx / 2);
+    const next = nextRound.matches[nextMatchIdx];
+    if (!next) return;
+    if (matchIdx % 2 === 0) next.player1Id = null;
+    else next.player2Id = null;
+    resetMatchResult(next);
+    this._cascadeClearFrom(cat, roundIndex + 1, nextMatchIdx);
+  }
+
   updateKnockoutMatch(categoryId, roundIndex, matchId, score1, score2) {
+    this.completeKnockoutMatch(categoryId, roundIndex, matchId, { score1, score2 });
+  }
+
+  completeKnockoutMatch(categoryId, roundIndex, matchId, { winnerId, score1, score2 } = {}) {
+    const found = this._findKnockoutMatch(categoryId, roundIndex, matchId);
+    if (!found) return false;
+    const { cat, match, matchIdx } = found;
+    const ok = applyMatchResult(match, { winnerId, score1, score2, allowDraw: false });
+    if (!ok || !match.winner) return false;
+    this._placeWinnerInNextRound(cat, roundIndex, matchIdx, match.winner);
+    this.save();
+    this.emit('change');
+    return true;
+  }
+
+  setKnockoutLive(categoryId, roundIndex, matchId) {
+    const found = this._findKnockoutMatch(categoryId, roundIndex, matchId);
+    if (!found || found.match.status === 'completed') return;
+    found.match.status = 'live';
+    this.save();
+    this.emit('change');
+  }
+
+  updateKnockoutSchedule(categoryId, roundIndex, matchId, { scheduledTime, court } = {}) {
+    const found = this._findKnockoutMatch(categoryId, roundIndex, matchId);
+    if (!found) return;
+    if (scheduledTime !== undefined) found.match.scheduledTime = scheduledTime || '';
+    if (court !== undefined) found.match.court = court === '' || court == null ? null : parseInt(court, 10);
+    this.save();
+    this.emit('change');
+  }
+
+  resetKnockoutMatch(categoryId, roundIndex, matchId) {
+    const found = this._findKnockoutMatch(categoryId, roundIndex, matchId);
+    if (!found) return;
+    resetMatchResult(found.match);
+    this._cascadeClearFrom(found.cat, roundIndex, found.matchIdx);
+    this.save();
+    this.emit('change');
+  }
+
+  scheduleCategoryMatches(categoryId, { startTime = '09:00', intervalMins = 15, courts = 2 } = {}) {
     const cat = this._data.categories[categoryId];
     if (!cat) return;
-    const round = cat.knockout.rounds[roundIndex];
-    if (!round) return;
-    const match = round.matches.find(m => m.id === matchId);
-    if (!match) return;
-
-    match.score1 = parseInt(score1);
-    match.score2 = parseInt(score2);
-    match.status = 'completed';
-
-    if (match.score1 > match.score2) {
-      match.winner = match.player1Id;
-    } else if (match.score2 > match.score1) {
-      match.winner = match.player2Id;
+    const queue = [];
+    for (const group of cat.groups || []) {
+      for (const match of group.matches || []) {
+        if (match.player1Id && match.player2Id) queue.push(match);
+      }
     }
-
-    // Advance winner to next round
-    if (match.winner && roundIndex + 1 < cat.knockout.rounds.length) {
-      const nextRound = cat.knockout.rounds[roundIndex + 1];
-      const matchIdx = round.matches.indexOf(match);
-      const nextMatchIdx = Math.floor(matchIdx / 2);
-      const isFirstPlayer = matchIdx % 2 === 0;
-
-      if (nextRound.matches[nextMatchIdx]) {
-        if (isFirstPlayer) {
-          nextRound.matches[nextMatchIdx].player1Id = match.winner;
-        } else {
-          nextRound.matches[nextMatchIdx].player2Id = match.winner;
+    for (const round of cat.knockout?.rounds || []) {
+      for (const match of round.matches) {
+        if (match.player1Id && match.player2Id && match.status !== 'completed') {
+          queue.push(match);
         }
       }
     }
-
+    const courtCount = Math.max(1, parseInt(courts, 10) || 2);
+    const step = Math.max(5, parseInt(intervalMins, 10) || 15);
+    queue.forEach((match, idx) => {
+      const slot = Math.floor(idx / courtCount);
+      match.court = (idx % courtCount) + 1;
+      match.scheduledTime = addMinutesToTime(startTime, slot * step);
+    });
     this.save();
     this.emit('change');
+  }
+
+  listBoardMatches(categoryId) {
+    const cat = this._data.categories[categoryId];
+    if (!cat) return [];
+    const items = [];
+    for (const group of cat.groups || []) {
+      for (const match of group.matches || []) {
+        items.push({
+          match,
+          categoryId,
+          stage: 'group',
+          label: group.name,
+          groupId: group.id,
+          roundIndex: null
+        });
+      }
+    }
+    (cat.knockout?.rounds || []).forEach((round, roundIndex) => {
+      for (const match of round.matches) {
+        items.push({
+          match,
+          categoryId,
+          stage: 'knockout',
+          label: round.name,
+          groupId: '',
+          roundIndex
+        });
+      }
+    });
+    return items;
+  }
+
+  countMatchStatuses() {
+    let live = 0;
+    let upcoming = 0;
+    let completed = 0;
+    for (const cat of Object.values(this._data.categories || {})) {
+      for (const group of cat.groups || []) {
+        for (const match of group.matches || []) {
+          if (match.status === 'live') live++;
+          else if (match.status === 'completed') completed++;
+          else upcoming++;
+        }
+      }
+      for (const round of cat.knockout?.rounds || []) {
+        for (const match of round.matches) {
+          if (!match.player1Id && !match.player2Id) continue;
+          if (match.status === 'live') live++;
+          else if (match.status === 'completed') completed++;
+          else upcoming++;
+        }
+      }
+    }
+    return { live, upcoming, completed };
   }
 
   clearKnockout(categoryId) {

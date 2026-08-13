@@ -12,6 +12,9 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Live tournament board (written by local admin)
+data/tournament.json
+
 # Editor
 .vscode/
 .idea/

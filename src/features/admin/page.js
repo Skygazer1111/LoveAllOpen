@@ -3,6 +3,7 @@
  */
 
 import { store } from '../../data/store.js';
+import { publishTournament, startLiveSync } from '../../data/sync.js';
 import { showModal, closeModal, showConfirm, showToast } from '../../ui/feedback/modal.js';
 import { renderGroupStandings } from '../../ui/tournament/group-table.js';
 import { renderMatchCard } from '../../ui/tournament/match-card.js';
@@ -25,7 +26,7 @@ export function renderAdminPage() {
         <div class="page-hero-inner">
           <p class="eyebrow">Admin</p>
           <h1 class="page-title">Tournament control</h1>
-          <p class="page-subtitle">Edit event details, publish fixtures, and update scores</p>
+          <p class="page-subtitle">Add players, set match times, pick winners, and publish live to the fixtures page</p>
         </div>
       </header>
 
@@ -36,6 +37,7 @@ export function renderAdminPage() {
             <button class="btn btn-outline btn-sm" id="btn-import-data">Import</button>
             <button class="btn btn-danger btn-sm" id="btn-reset-data">Reset all</button>
           </div>
+          <p class="live-sync-status" id="live-sync-status">Publishing live board…</p>
           <button class="btn btn-outline btn-sm" id="btn-logout">Logout</button>
         </div>
 
@@ -314,7 +316,11 @@ function renderMatchesSection(categoryId, cat) {
           <span class="step-number">3</span>
           <span>Group Matches (${completedMatches}/${totalMatches} completed)</span>
         </div>
+        <div class="admin-actions">
+          <button class="btn btn-outline btn-sm" id="btn-schedule-matches">Set times &amp; courts</button>
+        </div>
       </div>
+      <p class="admin-hint">Set a match live when it starts. Pick a winner to complete it — scores are optional. Knockout winners move on automatically.</p>
   `;
 
   for (const group of groups) {
@@ -472,6 +478,11 @@ function bindAdminContentEvents() {
     });
   }
 
+  const scheduleBtn = document.getElementById('btn-schedule-matches');
+  if (scheduleBtn) {
+    scheduleBtn.addEventListener('click', () => openBulkScheduleModal(currentCategory));
+  }
+
   // Clear knockout button
   const clearKoBtn = document.getElementById('btn-clear-knockout');
   if (clearKoBtn) {
@@ -550,6 +561,53 @@ function openAddParticipantModal(categoryId) {
   });
 }
 
+function getFixture(categoryId, stage, loc, matchId) {
+  if (stage === 'knockout') {
+    const round = store.getKnockout(categoryId).rounds[loc];
+    return { match: round?.matches.find(m => m.id === matchId), roundName: round?.name || 'Knockout' };
+  }
+  const group = store.getGroups(categoryId).find(g => g.id === loc);
+  return { match: group?.matches.find(m => m.id === matchId), roundName: group?.name || 'Group' };
+}
+
+function playerName(categoryId, participantId, fallback) {
+  const p = store.getParticipantById(categoryId, participantId);
+  return p ? (p.teamName || p.name) : fallback;
+}
+
+function openBulkScheduleModal(categoryId) {
+  const settings = store.getSettings();
+  showModal({
+    title: 'Set times & courts',
+    content: `
+      <p class="admin-hint" style="margin-top:0">Fills every ready match in this category, court by court.</p>
+      <div class="input-group">
+        <label class="input-label">First match</label>
+        <input type="time" class="input" id="bulk-start-time" value="09:00" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">Minutes between slots</label>
+        <input type="number" class="input" id="bulk-interval" min="5" max="60" value="15" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">Courts in use</label>
+        <input type="number" class="input" id="bulk-courts" min="1" max="8" value="${settings.courts || 2}" />
+      </div>
+    `,
+    submitLabel: 'Assign times',
+    onSubmit: () => {
+      store.scheduleCategoryMatches(categoryId, {
+        startTime: document.getElementById('bulk-start-time')?.value || '09:00',
+        intervalMins: parseInt(document.getElementById('bulk-interval')?.value || '15', 10),
+        courts: parseInt(document.getElementById('bulk-courts')?.value || '2', 10)
+      });
+      closeModal();
+      showToast('Match times assigned', 'success');
+      refreshAdminContent();
+    }
+  });
+}
+
 // --- Global handlers (called from match card onclick) ---
 
 window.removeParticipant = function(categoryId, participantId) {
@@ -568,59 +626,136 @@ window.removeParticipant = function(categoryId, participantId) {
   });
 };
 
-window.setMatchLive = function(categoryId, groupId, matchId) {
-  store.setMatchLive(categoryId, groupId, matchId);
-  showToast('Match set to live!', 'success');
+window.setFixtureLive = function(categoryId, stage, loc, matchId) {
+  if (stage === 'knockout') store.setKnockoutLive(categoryId, loc, matchId);
+  else store.setMatchLive(categoryId, loc, matchId);
+  showToast('Match is live', 'success');
   refreshAdminContent();
 };
 
-window.openScoreModal = function(categoryId, groupId, matchId) {
-  const group = store.getGroups(categoryId).find(g => g.id === groupId);
-  const match = group?.matches.find(m => m.id === matchId);
+window.openScheduleModal = function(categoryId, stage, loc, matchId) {
+  const { match } = getFixture(categoryId, stage, loc, matchId);
   if (!match) return;
-
-  const p1 = store.getParticipantById(categoryId, match.player1Id);
-  const p2 = store.getParticipantById(categoryId, match.player2Id);
-  const name1 = p1 ? (p1.teamName || p1.name) : 'Player 1';
-  const name2 = p2 ? (p2.teamName || p2.name) : 'Player 2';
+  const courts = store.getSettings().courts || 2;
 
   showModal({
-    title: 'Enter Score',
+    title: 'Match time & court',
     content: `
-      <div class="score-input-group" style="justify-content: center; padding: var(--space-md) 0;">
-        <div style="text-align: center;">
-          <div style="font-weight: 600; margin-bottom: var(--space-sm); font-size: 0.9rem;">${name1}</div>
-          <input type="number" class="score-input" id="score-input-1" min="0" max="99" value="${match.score1 !== null ? match.score1 : ''}" />
-        </div>
-        <span class="score-vs">VS</span>
-        <div style="text-align: center;">
-          <div style="font-weight: 600; margin-bottom: var(--space-sm); font-size: 0.9rem;">${name2}</div>
-          <input type="number" class="score-input" id="score-input-2" min="0" max="99" value="${match.score2 !== null ? match.score2 : ''}" />
-        </div>
+      <div class="input-group">
+        <label class="input-label">Start time</label>
+        <input type="time" class="input" id="fixture-time" value="${match.scheduledTime || ''}" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">Court</label>
+        <select class="select" id="fixture-court">
+          <option value="">Not set</option>
+          ${Array.from({ length: courts }, (_, i) => `
+            <option value="${i + 1}" ${String(match.court) === String(i + 1) ? 'selected' : ''}>Court ${i + 1}</option>
+          `).join('')}
+        </select>
       </div>
     `,
-    submitLabel: 'Save Score',
+    submitLabel: 'Save',
     onSubmit: () => {
-      const s1 = document.getElementById('score-input-1')?.value;
-      const s2 = document.getElementById('score-input-2')?.value;
-      if (s1 === '' || s2 === '') {
-        showToast('Please enter both scores', 'error');
-        return;
-      }
-      store.updateMatchScore(categoryId, groupId, matchId, s1, s2);
+      const payload = {
+        scheduledTime: document.getElementById('fixture-time')?.value || '',
+        court: document.getElementById('fixture-court')?.value || ''
+      };
+      if (stage === 'knockout') store.updateKnockoutSchedule(categoryId, loc, matchId, payload);
+      else store.updateMatchSchedule(categoryId, loc, matchId, payload);
       closeModal();
-      showToast('Score saved!', 'success');
+      showToast('Schedule updated', 'success');
       refreshAdminContent();
     }
   });
 };
 
-window.resetMatchScore = function(categoryId, groupId, matchId) {
+window.openResultModal = function(categoryId, stage, loc, matchId) {
+  const { match, roundName } = getFixture(categoryId, stage, loc, matchId);
+  if (!match) return;
+
+  const name1 = playerName(categoryId, match.player1Id, 'Player 1');
+  const name2 = playerName(categoryId, match.player2Id, 'Player 2');
+  const knockout = stage === 'knockout';
+
+  showModal({
+    title: `${roundName} — pick winner`,
+    content: `
+      <p class="result-modal-hint">Tap the winner. Scores are optional.</p>
+      <div class="winner-pick" id="winner-pick">
+        <button type="button" class="winner-pick-btn" data-winner="${match.player1Id}">${name1}</button>
+        <button type="button" class="winner-pick-btn" data-winner="${match.player2Id}">${name2}</button>
+      </div>
+      <div class="score-input-group result-scores">
+        <div>
+          <label class="input-label">${name1}</label>
+          <input type="number" class="score-input" id="result-score-1" min="0" max="99" value="${match.score1 ?? ''}" />
+        </div>
+        <span class="score-vs">–</span>
+        <div>
+          <label class="input-label">${name2}</label>
+          <input type="number" class="score-input" id="result-score-2" min="0" max="99" value="${match.score2 ?? ''}" />
+        </div>
+      </div>
+      ${knockout ? '<p class="text-muted result-modal-note">No draws in knockout — the winner moves on.</p>' : `
+        <button type="button" class="btn btn-outline w-full" id="btn-record-draw">Record draw</button>
+      `}
+    `,
+    submitLabel: 'Save result',
+    onSubmit: () => {
+      const selected = document.querySelector('.winner-pick-btn.is-selected')?.dataset.winner;
+      const s1 = document.getElementById('result-score-1')?.value;
+      const s2 = document.getElementById('result-score-2')?.value;
+      if (!selected && (s1 === '' || s2 === '')) {
+        showToast('Pick a winner or enter both scores', 'error');
+        return;
+      }
+      if (knockout && s1 !== '' && s2 !== '' && s1 === s2 && !selected) {
+        showToast('Knockout matches cannot be a draw', 'error');
+        return;
+      }
+      const payload = { winnerId: selected || undefined, score1: s1, score2: s2 };
+      const ok = knockout
+        ? store.completeKnockoutMatch(categoryId, loc, matchId, payload)
+        : store.completeGroupMatch(categoryId, loc, matchId, payload);
+      if (!ok) {
+        showToast('Could not save that result', 'error');
+        return;
+      }
+      closeModal();
+      showToast(knockout ? 'Winner advances' : 'Result saved', 'success');
+      refreshAdminContent();
+    }
+  });
+
+  const pick = document.getElementById('winner-pick');
+  pick?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.winner-pick-btn');
+    if (!btn) return;
+    pick.querySelectorAll('.winner-pick-btn').forEach(b => b.classList.toggle('is-selected', b === btn));
+  });
+
+  document.getElementById('btn-record-draw')?.addEventListener('click', () => {
+    store.completeGroupMatch(categoryId, loc, matchId, {
+      winnerId: null,
+      score1: document.getElementById('result-score-1')?.value,
+      score2: document.getElementById('result-score-2')?.value
+    });
+    closeModal();
+    showToast('Draw recorded', 'success');
+    refreshAdminContent();
+  });
+};
+
+window.resetFixture = function(categoryId, stage, loc, matchId) {
   showConfirm({
-    title: 'Reset Match',
-    message: 'Reset this match score and status?',
+    title: 'Reset match',
+    message: stage === 'knockout'
+      ? 'Clear this result and remove the winner from later rounds?'
+      : 'Clear this result and set the match back to upcoming?',
     onConfirm: () => {
-      store.resetMatch(categoryId, groupId, matchId);
+      if (stage === 'knockout') store.resetKnockoutMatch(categoryId, loc, matchId);
+      else store.resetMatch(categoryId, loc, matchId);
       showToast('Match reset', 'info');
       refreshAdminContent();
     },
@@ -628,52 +763,10 @@ window.resetMatchScore = function(categoryId, groupId, matchId) {
   });
 };
 
-window.openKnockoutScoreModal = function(categoryId, roundIndex, matchId) {
-  const knockout = store.getKnockout(categoryId);
-  const round = knockout.rounds[roundIndex];
-  const match = round?.matches.find(m => m.id === matchId);
-  if (!match) return;
-
-  const p1 = store.getParticipantById(categoryId, match.player1Id);
-  const p2 = store.getParticipantById(categoryId, match.player2Id);
-  const name1 = p1 ? (p1.teamName || p1.name) : 'Player 1';
-  const name2 = p2 ? (p2.teamName || p2.name) : 'Player 2';
-
-  showModal({
-    title: `${round.name} — Enter Score`,
-    content: `
-      <div class="score-input-group" style="justify-content: center; padding: var(--space-md) 0;">
-        <div style="text-align: center;">
-          <div style="font-weight: 600; margin-bottom: var(--space-sm); font-size: 0.9rem;">${name1}</div>
-          <input type="number" class="score-input" id="ko-score-1" min="0" max="99" value="" />
-        </div>
-        <span class="score-vs">VS</span>
-        <div style="text-align: center;">
-          <div style="font-weight: 600; margin-bottom: var(--space-sm); font-size: 0.9rem;">${name2}</div>
-          <input type="number" class="score-input" id="ko-score-2" min="0" max="99" value="" />
-        </div>
-      </div>
-      <p class="text-muted" style="text-align: center; font-size: 0.8rem;">Scores cannot be tied in knockout. Winner advances.</p>
-    `,
-    submitLabel: 'Save Score',
-    onSubmit: () => {
-      const s1 = document.getElementById('ko-score-1')?.value;
-      const s2 = document.getElementById('ko-score-2')?.value;
-      if (s1 === '' || s2 === '') {
-        showToast('Please enter both scores', 'error');
-        return;
-      }
-      if (s1 === s2) {
-        showToast('Knockout matches cannot be a draw!', 'error');
-        return;
-      }
-      store.updateKnockoutMatch(categoryId, roundIndex, matchId, s1, s2);
-      closeModal();
-      showToast('Score saved! Winner advances.', 'success');
-      refreshAdminContent();
-    }
-  });
-};
+window.setMatchLive = (categoryId, groupId, matchId) => window.setFixtureLive(categoryId, 'group', groupId, matchId);
+window.openScoreModal = (categoryId, groupId, matchId) => window.openResultModal(categoryId, 'group', groupId, matchId);
+window.resetMatchScore = (categoryId, groupId, matchId) => window.resetFixture(categoryId, 'group', groupId, matchId);
+window.openKnockoutScoreModal = (categoryId, roundIndex, matchId) => window.openResultModal(categoryId, 'knockout', roundIndex, matchId);
 
 export function initAdminPage() {
   if (!isAuthenticated) {
@@ -805,6 +898,28 @@ export function initAdminPage() {
 
   bindSettingsEvents();
   bindAdminContentEvents();
+  bindAdminSync();
+}
+
+let onAdminChange = null;
+let publishTimer = null;
+
+function bindAdminSync() {
+  if (onAdminChange) store.off('change', onAdminChange);
+  onAdminChange = () => {
+    clearTimeout(publishTimer);
+    publishTimer = setTimeout(async () => {
+      const ok = await publishTournament();
+      const status = document.getElementById('live-sync-status');
+      if (status) {
+        status.textContent = ok ? 'Live board published' : 'Saved on this device — live board not connected';
+        status.classList.toggle('is-live', ok);
+      }
+    }, 350);
+  };
+  store.on('change', onAdminChange);
+  startLiveSync({ isAdmin: true });
+  onAdminChange();
 }
 
 // Helper to lazily import navbar (avoid circular deps)

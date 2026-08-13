@@ -3,6 +3,7 @@
  */
 
 import { store } from '../../data/store.js';
+import { startLiveSync } from '../../data/sync.js';
 import { renderGroupStandings } from '../../ui/tournament/group-table.js';
 import { renderMatchCard } from '../../ui/tournament/match-card.js';
 import { renderBracket } from '../../ui/tournament/bracket.js';
@@ -10,6 +11,13 @@ import { initMotion } from '../../ui/motion.js';
 import { renderFooter } from '../../ui/layout/footer.js';
 
 let currentCategory = 'mens-singles';
+let onStoreChange = null;
+
+function timeSort(item) {
+  const t = item.match.scheduledTime || '99:99';
+  const court = item.match.court || 9;
+  return `${t}-${court}-${item.match.matchNumber}`;
+}
 
 export function renderSchedulePage() {
   const settings = store.getSettings();
@@ -22,6 +30,10 @@ export function renderSchedulePage() {
           <p class="eyebrow">Fixtures</p>
           <h1 class="page-title">Match schedule</h1>
           <p class="page-subtitle">${settings.tournamentDate} · ${settings.venueShort || 'Toneup Badminton'}</p>
+          <p class="live-board-status" id="live-board-status">
+            <span class="live-dot"></span>
+            Live board — results update as matches finish
+          </p>
         </div>
       </header>
 
@@ -48,12 +60,33 @@ export function renderSchedulePage() {
   `;
 }
 
+function renderMatchBand(title, items, categoryId, extraClass = '') {
+  if (items.length === 0) return '';
+  return `
+    <h3 class="match-band-title ${extraClass}">
+      ${extraClass === 'live' ? '<span class="live-dot"></span>' : ''}
+      ${title}
+    </h3>
+    <div class="match-grid ${extraClass === 'live' ? 'match-grid-live' : ''}">
+      ${items.map(item => renderMatchCard(categoryId, item.match, {
+        showGroup: true,
+        groupName: item.label,
+        label: item.label,
+        stage: item.stage,
+        groupId: item.groupId,
+        roundIndex: item.roundIndex
+      })).join('')}
+    </div>
+  `;
+}
+
 function renderScheduleContent(categoryId) {
   const cat = store.getCategory(categoryId);
   if (!cat) return '';
 
   const groups = store.getGroups(categoryId);
   const knockout = store.getKnockout(categoryId);
+  const board = store.listBoardMatches(categoryId);
   const hasGroups = groups.length > 0;
   const hasKnockout = knockout.rounds && knockout.rounds.length > 0;
 
@@ -68,7 +101,42 @@ function renderScheduleContent(categoryId) {
     `;
   }
 
+  const playable = board.filter(item => item.match.player1Id || item.match.player2Id);
+  const live = playable.filter(item => item.match.status === 'live');
+  const upcoming = playable
+    .filter(item => item.match.status === 'upcoming')
+    .sort((a, b) => timeSort(a).localeCompare(timeSort(b)));
+  const completed = playable.filter(item => item.match.status === 'completed');
+
+  const finalRound = hasKnockout ? knockout.rounds[knockout.rounds.length - 1] : null;
+  const championId = finalRound?.matches?.[0]?.status === 'completed' ? finalRound.matches[0].winner : null;
+  const champion = championId ? store.getParticipantById(categoryId, championId) : null;
+
   let html = '';
+
+  if (champion) {
+    html += `
+      <section class="section champion-banner" data-reveal>
+        <p class="eyebrow">Champion</p>
+        <h2 class="section-heading">${champion.teamName || champion.name}</h2>
+        <p class="section-copy">${cat.name} winner</p>
+      </section>
+    `;
+  }
+
+  html += `
+    <section class="section" data-reveal>
+      <div class="section-intro">
+        <p class="eyebrow">Board</p>
+        <h2 class="section-heading">All matches</h2>
+        <p class="section-copy">Times, courts, and results — updated live from the referee desk.</p>
+      </div>
+      ${renderMatchBand('Live now', live, categoryId, 'live')}
+      ${renderMatchBand('Upcoming', upcoming, categoryId)}
+      ${renderMatchBand('Completed', completed, categoryId)}
+      ${playable.length === 0 ? '<p class="text-muted">No matches listed yet.</p>' : ''}
+    </section>
+  `;
 
   if (hasGroups) {
     html += `
@@ -90,58 +158,6 @@ function renderScheduleContent(categoryId) {
         </div>
       </section>
     `;
-
-    const allMatches = [];
-    for (const group of groups) {
-      for (const match of group.matches) {
-        allMatches.push({ match, groupName: group.name, groupId: group.id });
-      }
-    }
-
-    if (allMatches.length > 0) {
-      const liveMatches = allMatches.filter(m => m.match.status === 'live');
-      const upcomingMatches = allMatches.filter(m => m.match.status === 'upcoming');
-      const completedMatches = allMatches.filter(m => m.match.status === 'completed');
-
-      html += `
-        <section class="section" data-reveal>
-          <div class="section-intro">
-            <p class="eyebrow">Fixtures</p>
-            <h2 class="section-heading">Matches</h2>
-          </div>
-      `;
-
-      if (liveMatches.length > 0) {
-        html += `
-          <h3 class="match-band-title live">
-            <span class="live-dot"></span> Live now
-          </h3>
-          <div class="match-grid match-grid-live">
-            ${liveMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('')}
-          </div>
-        `;
-      }
-
-      if (upcomingMatches.length > 0) {
-        html += `
-          <h3 class="match-band-title">Upcoming</h3>
-          <div class="match-grid">
-            ${upcomingMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('')}
-          </div>
-        `;
-      }
-
-      if (completedMatches.length > 0) {
-        html += `
-          <h3 class="match-band-title">Completed</h3>
-          <div class="match-grid">
-            ${completedMatches.map(m => renderMatchCard(categoryId, m.match, { showGroup: true, groupName: m.groupName })).join('')}
-          </div>
-        `;
-      }
-
-      html += '</section>';
-    }
   }
 
   if (hasKnockout) {
@@ -159,6 +175,12 @@ function renderScheduleContent(categoryId) {
   return html;
 }
 
+function refreshScheduleContent() {
+  const content = document.getElementById('schedule-content');
+  if (!content) return;
+  content.innerHTML = renderScheduleContent(currentCategory);
+}
+
 export function initSchedulePage() {
   const tabs = document.querySelectorAll('#schedule-tabs .tab');
   tabs.forEach(tab => {
@@ -170,13 +192,17 @@ export function initSchedulePage() {
       });
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
-      const content = document.getElementById('schedule-content');
-      if (content) {
-        content.innerHTML = renderScheduleContent(currentCategory);
-        initMotion(content);
-      }
+      refreshScheduleContent();
+      initMotion(document.getElementById('schedule-content'));
     });
   });
+
+  if (onStoreChange) store.off('change', onStoreChange);
+  onStoreChange = () => {
+    if (document.getElementById('schedule-page')) refreshScheduleContent();
+  };
+  store.on('change', onStoreChange);
+  startLiveSync();
   initMotion(document.getElementById('schedule-page') || document);
 }
 

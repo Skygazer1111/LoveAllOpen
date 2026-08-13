@@ -838,6 +838,62 @@ h1, h2, h3, h4 {
 }
 .contact-phone { color: var(--text-secondary); }
 
+/* ----- Instagram ----- */
+.instagram-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  padding: 28px 32px;
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(135deg, rgba(214, 239, 74, 0.28), rgba(31, 107, 69, 0.16) 42%, var(--ink) 78%);
+  color: #fff;
+  border: 1px solid rgba(16, 36, 26, 0.2);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.instagram-card:hover {
+  transform: translateY(-3px);
+  color: #fff;
+  box-shadow: 0 22px 48px rgba(16, 36, 26, 0.16);
+}
+.instagram-icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--court);
+}
+.instagram-copy .eyebrow {
+  color: var(--court);
+}
+.instagram-copy h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: 6px 0 8px;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+.instagram-copy p {
+  color: rgba(255, 255, 255, 0.68);
+  max-width: 36ch;
+}
+.instagram-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--court);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
 /* ----- Footer ----- */
 .footer {
   text-align: center;
@@ -1137,6 +1193,96 @@ h1, h2, h3, h4 {
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 600;
+}
+.match-card-when {
+  margin: -2px 0 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--forest);
+}
+.match-card.is-live {
+  border-color: rgba(228, 87, 46, 0.35);
+}
+.match-card-actions {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+.live-board-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--forest);
+}
+.champion-banner {
+  padding: 28px 32px;
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(135deg, rgba(214, 239, 74, 0.55), rgba(31, 107, 69, 0.12)),
+    var(--surface);
+  border: 1px solid rgba(31, 107, 69, 0.16);
+}
+.winner-pick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.winner-pick-btn {
+  min-height: 56px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--mist);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+.winner-pick-btn.is-selected {
+  background: rgba(214, 239, 74, 0.55);
+  border-color: var(--forest);
+}
+.result-modal-hint,
+.result-modal-note {
+  text-align: center;
+  margin-bottom: 14px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.result-scores {
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.live-sync-status {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 auto 0 8px;
+}
+.live-sync-status.is-live {
+  color: var(--forest);
+}
+.bracket-match-when {
+  padding: 6px 12px 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--forest);
+}
+.bracket-match-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.bracket-match.is-live {
+  border-color: rgba(228, 87, 46, 0.35);
 }
 .match-card-players { display: flex; flex-direction: column; gap: 8px; }
 .match-player {
@@ -1958,6 +2104,26 @@ h1, h2, h3, h4 {
   .contact-link {
     min-height: 72px;
     padding: 18px;
+  }
+
+  .instagram-card {
+    grid-template-columns: 1fr;
+    padding: 22px 18px;
+    gap: 16px;
+  }
+
+  .instagram-cta {
+    width: 100%;
+  }
+
+  .winner-pick {
+    grid-template-columns: 1fr;
+  }
+
+  .live-sync-status {
+    width: 100%;
+    margin: 8px 0 0;
+    order: 3;
   }
 
   .tabs {
