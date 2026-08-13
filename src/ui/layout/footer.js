@@ -15,6 +15,10 @@ export function renderFooter() {
         <span class="footer-links-sep" aria-hidden="true">·</span>
         <a href="#/terms">Terms of Use</a>
       </nav>
+      <p class="footer-built">
+        Built by
+        <a href="https://portfolio-priyan.vercel.app/" target="_blank" rel="noopener noreferrer">Priyan</a>
+      </p>
       <p class="footer-copyright">© ${year} LoveAll Club</p>
     </footer>
   `;
