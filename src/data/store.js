@@ -916,9 +916,17 @@ class Store {
           unmatched.push(row.label || 'Unnamed group match');
           continue;
         }
-        const group = groupByParticipant.get(id1);
-        const group2 = groupByParticipant.get(id2);
-        if (!group || group !== group2) {
+
+        const wanted = String(row.groupName || '').trim().toLowerCase().replace(/^group\s+/, '');
+        let group = wanted
+          ? cat.groups.find((g) => g.name.trim().toLowerCase().replace(/^group\s+/, '') === wanted)
+          : null;
+        if (!group) {
+          const g1 = groupByParticipant.get(id1);
+          const g2 = groupByParticipant.get(id2);
+          group = g1 && g1 === g2 ? g1 : null;
+        }
+        if (!group || !group.participantIds.includes(id1) || !group.participantIds.includes(id2)) {
           unmatched.push(row.label || 'Group match with mixed groups');
           continue;
         }
