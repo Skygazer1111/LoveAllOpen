@@ -36,7 +36,17 @@ function tournamentDevStore() {
   return {
     name: 'tournament-dev-store',
     configureServer(server) {
-      const filePath = path.join(server.config.root, 'data', 'tournament.json');
+      const root = server.config.root;
+      const filePath = path.join(root, 'data', 'tournament.json');
+      const publicPath = path.join(root, 'public', 'live-board.json');
+
+      const writeBoard = (data) => {
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.mkdirSync(path.dirname(publicPath), { recursive: true });
+        const json = JSON.stringify(data, null, 2);
+        fs.writeFileSync(filePath, json);
+        fs.writeFileSync(publicPath, json);
+      };
 
       server.middlewares.use(async (req, res, next) => {
         const url = (req.url || '').split('?')[0];
@@ -53,8 +63,9 @@ function tournamentDevStore() {
 
         if (req.method === 'GET' || req.method === 'HEAD') {
           try {
-            if (!fs.existsSync(filePath)) return send(200, { data: null, configured: true });
-            const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            const source = fs.existsSync(filePath) ? filePath : publicPath;
+            if (!fs.existsSync(source)) return send(200, { data: null, configured: true });
+            const data = JSON.parse(fs.readFileSync(source, 'utf8'));
             return send(200, { data, configured: true });
           } catch {
             return send(200, { data: null, configured: true });
@@ -68,9 +79,8 @@ function tournamentDevStore() {
             if (!data?.categories || !data?.settings) {
               return send(400, { error: 'Invalid tournament data' });
             }
-            fs.mkdirSync(path.dirname(filePath), { recursive: true });
-            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-            return send(200, { ok: true });
+            writeBoard(data);
+            return send(200, { ok: true, configured: true });
           } catch {
             return send(400, { error: 'Invalid JSON' });
           }
@@ -120,6 +130,7 @@ function whatsappDevRedirect() {
 export default defineConfig({
   server: {
     port: 3000,
+    host: true,
     open: true
   },
   publicDir: 'public',

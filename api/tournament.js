@@ -3,9 +3,15 @@
  * GET  /api/tournament → { data }
  * PUT  /api/tournament → save published fixtures (admin)
  *
- * Production storage: Vercel KV (KV_REST_API_URL + KV_REST_API_TOKEN)
- * Local dev: Vite middleware writes data/tournament.json
+ * Production storage: Vercel KV / Upstash Redis
+ *   KV_REST_API_URL + KV_REST_API_TOKEN
+ *   or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN
+ * Fallback read: public/live-board.json (from last local publish + deploy)
+ * Local dev: Vite middleware writes data/tournament.json + public/live-board.json
  */
+
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const KV_KEY = 'loveall_tournament';
 
@@ -19,11 +25,20 @@ function isAuthorized(req) {
   return key && key === secret;
 }
 
+function kvConfig() {
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+  return {
+    url: url.replace(/\/$/, ''),
+    token,
+    configured: Boolean(url && token)
+  };
+}
+
 async function kvGet() {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  const res = await fetch(`${url.replace(/\/$/, '')}/get/${KV_KEY}`, {
+  const { url, token, configured } = kvConfig();
+  if (!configured) return null;
+  const res = await fetch(`${url}/get/${KV_KEY}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) return null;
@@ -40,10 +55,9 @@ async function kvGet() {
 }
 
 async function kvSet(data) {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return false;
-  const res = await fetch(`${url.replace(/\/$/, '')}/set/${KV_KEY}`, {
+  const { url, token, configured } = kvConfig();
+  if (!configured) return false;
+  const res = await fetch(`${url}/set/${KV_KEY}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -54,15 +68,37 @@ async function kvSet(data) {
   return res.ok;
 }
 
+function readBundledBoard() {
+  const candidates = [
+    join(process.cwd(), 'public', 'live-board.json'),
+    join(process.cwd(), 'live-board.json'),
+    join(process.cwd(), 'data', 'tournament.json'),
+    join(process.cwd(), 'dist', 'live-board.json')
+  ];
+  for (const filePath of candidates) {
+    try {
+      if (!existsSync(filePath)) continue;
+      const parsed = JSON.parse(readFileSync(filePath, 'utf8'));
+      if (parsed?.categories && parsed?.settings) return parsed;
+      if (parsed?.data?.categories && parsed?.data?.settings) return parsed.data;
+    } catch {
+      // try next
+    }
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
+  const { configured } = kvConfig();
+
   if (req.method === 'GET' || req.method === 'HEAD') {
-    const data = await kvGet();
+    const data = (await kvGet()) || readBundledBoard();
     if (!data) {
       res.statusCode = 200;
-      res.end(JSON.stringify({ data: null, configured: Boolean(process.env.KV_REST_API_URL) }));
+      res.end(JSON.stringify({ data: null, configured }));
       return;
     }
     res.statusCode = 200;
@@ -85,10 +121,10 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (!process.env.KV_REST_API_URL) {
+    if (!configured) {
       res.statusCode = 503;
       res.end(JSON.stringify({
-        error: 'Live board is not configured. Add a Vercel KV store, then set KV_REST_API_URL and KV_REST_API_TOKEN.'
+        error: 'Live board is not connected. Free: create Redis at console.upstash.com, add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel env vars, then redeploy.'
       }));
       return;
     }
@@ -101,7 +137,7 @@ export default async function handler(req, res) {
     }
 
     res.statusCode = 200;
-    res.end(JSON.stringify({ ok: true }));
+    res.end(JSON.stringify({ ok: true, configured: true }));
     return;
   }
 

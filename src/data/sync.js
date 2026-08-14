@@ -1,7 +1,7 @@
 /**
  * Live fixture sync — admin publishes, public pages pull.
- * Dev: Vite writes data/tournament.json
- * Prod: Vercel KV (if configured) via /api/tournament
+ * Dev: Vite writes data/tournament.json + public/live-board.json
+ * Prod: Vercel KV / Upstash Redis via /api/tournament
  *
  * Admin is always the source of truth: never pull remote over an admin session.
  */
@@ -13,33 +13,60 @@ let pollTimer = null;
 let publishing = false;
 let publishAgain = false;
 let pausePullUntil = 0;
+let autoPublishTimer = null;
 
 function isAdminSession() {
   return sessionStorage.getItem('loveall_admin') === '1';
 }
 
-export async function fetchRemoteTournament() {
+async function readJson(res) {
   try {
-    const res = await fetch('/api/tournament', { cache: 'no-store' });
-    if (!res.ok) return null;
-    const payload = await res.json();
-    if (!payload?.data?.categories) return null;
-    return payload.data;
+    return await res.json();
   } catch {
     return null;
   }
 }
 
+/**
+ * Prefer the shared API. Fall back to a static live-board.json
+ * (written by local Vite publish / included in deploy).
+ */
+export async function fetchRemoteTournament() {
+  try {
+    const res = await fetch('/api/tournament', { cache: 'no-store' });
+    if (res.ok) {
+      const payload = await readJson(res);
+      if (payload?.data?.categories) return payload.data;
+    }
+  } catch {
+    // try static fallback
+  }
+
+  try {
+    const res = await fetch(`/live-board.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const payload = await readJson(res);
+    if (payload?.categories) return payload;
+    if (payload?.data?.categories) return payload.data;
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+/**
+ * @returns {Promise<{ ok: boolean, error?: string, status?: number }>}
+ */
 export async function publishTournament(data = store.getData()) {
-  // Always send the latest store snapshot; queue a follow-up if a publish is in flight
   if (publishing) {
     publishAgain = true;
-    return false;
+    return { ok: false, error: 'Publish already in progress' };
   }
 
   publishing = true;
   pausePullUntil = Date.now() + 15000;
-  let ok = false;
+  let result = { ok: false, error: 'Could not reach live board' };
 
   try {
     const res = await fetch('/api/tournament', {
@@ -50,9 +77,18 @@ export async function publishTournament(data = store.getData()) {
       },
       body: JSON.stringify({ data: data || store.getData() })
     });
-    ok = res.ok;
-  } catch {
-    ok = false;
+    const body = await readJson(res);
+    if (res.ok) {
+      result = { ok: true, status: res.status };
+    } else {
+      result = {
+        ok: false,
+        status: res.status,
+        error: body?.error || `Live board error (${res.status})`
+      };
+    }
+  } catch (err) {
+    result = { ok: false, error: err?.message || 'Network error while publishing' };
   } finally {
     publishing = false;
   }
@@ -62,34 +98,39 @@ export async function publishTournament(data = store.getData()) {
     return publishTournament(store.getData());
   }
 
-  return ok;
+  return result;
 }
 
 /**
- * Apply remote board only when it is strictly newer than local,
- * and never while an admin is logged in (admin writes win).
+ * Public pages: always take the published live board.
+ * Never let a visitor’s empty/stale localStorage block the shared schedule.
  */
 export async function pullRemoteTournament({ force = false } = {}) {
   if (!force && isAdminSession()) return false;
   if (!force && Date.now() < pausePullUntil) return false;
 
   const remote = await fetchRemoteTournament();
-  if (!remote) return false;
-
-  const localAt = Number(store.getData()?.updatedAt) || 0;
-  const remoteAt = Number(remote.updatedAt) || 0;
-
-  // Prefer local when timestamps are equal / missing — never clobber a fresh admin save
-  if (remoteAt <= localAt) return false;
+  if (!remote?.categories || !remote?.settings) return false;
+  if (!remote.settings.schedulePublished) return false;
 
   return store.replaceData(remote);
+}
+
+function queueAutoPublish() {
+  if (!isAdminSession() || !store.isSchedulePublished()) return;
+  clearTimeout(autoPublishTimer);
+  autoPublishTimer = setTimeout(() => {
+    publishTournament(store.getData());
+  }, 600);
 }
 
 export function startLiveSync({ isAdmin = false } = {}) {
   stopLiveSync();
 
-  // Admin only publishes; public pages poll for updates
-  if (isAdmin) return;
+  if (isAdmin) {
+    store.on('change', queueAutoPublish);
+    return;
+  }
 
   pullRemoteTournament();
   pollTimer = setInterval(() => {
@@ -102,4 +143,7 @@ export function stopLiveSync() {
     clearInterval(pollTimer);
     pollTimer = null;
   }
+  clearTimeout(autoPublishTimer);
+  autoPublishTimer = null;
+  store.off('change', queueAutoPublish);
 }

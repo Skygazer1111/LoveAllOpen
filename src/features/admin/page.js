@@ -42,7 +42,13 @@ export function renderAdminPage() {
             <button class="btn btn-danger btn-sm" id="btn-reset-data">Reset all</button>
           </div>
           <p class="live-sync-status ${store.isSchedulePublished() ? 'is-live' : ''}" id="live-sync-status">
-            ${store.isSchedulePublished() ? 'Schedule is live for players' : 'Draft — not visible to players yet'}
+            ${store.isSchedulePublished() ? 'Schedule marked published on this device' : 'Draft — not visible to players yet'}
+          </p>
+          <p class="admin-hint" id="live-board-hint">
+            Publish shares fixtures with every phone. Free setup: create Redis at
+            <a href="https://console.upstash.com" target="_blank" rel="noopener noreferrer">console.upstash.com</a>
+            (Free plan), then add <code>UPSTASH_REDIS_REST_URL</code> and <code>UPSTASH_REDIS_REST_TOKEN</code>
+            in Vercel env vars and redeploy. Do not buy Vercel Storage plans.
           </p>
           <button class="btn btn-outline btn-sm" id="btn-logout">Logout</button>
         </div>
@@ -442,12 +448,12 @@ function bindSettingsEvents() {
     const ok = await publishTournament(store.getData());
     const status = document.getElementById('live-sync-status');
     if (status) {
-      status.textContent = ok
+      status.textContent = ok.ok
         ? 'Event details saved & schedule published'
         : 'Saved locally — use Publish schedule to push live';
-      status.classList.toggle('is-live', ok && store.isSchedulePublished());
+      status.classList.toggle('is-live', ok.ok && store.isSchedulePublished());
     }
-    showToast(ok ? 'Event details saved' : 'Event details saved on this device', 'success');
+    showToast(ok.ok ? 'Event details saved' : 'Event details saved on this device', 'success');
   });
 }
 
@@ -903,16 +909,23 @@ export function initAdminPage() {
   if (publishBtn) {
     publishBtn.addEventListener('click', async () => {
       store.publishSchedule();
-      const ok = await publishTournament(store.getData());
+      const result = await publishTournament(store.getData());
       const status = document.getElementById('live-sync-status');
       if (status) {
-        status.textContent = ok
+        status.textContent = result.ok
           ? 'Schedule is live for players'
-          : 'Published locally — live board not connected';
-        status.classList.add('is-live');
+          : 'Published on this device only — live board not connected';
+        status.classList.toggle('is-live', result.ok);
       }
       publishBtn.textContent = 'Re-publish schedule';
-      showToast(ok ? 'Schedule published!' : 'Marked published — connect live board on Vercel', ok ? 'success' : 'info');
+      if (result.ok) {
+        showToast('Schedule published — players can see fixtures', 'success');
+      } else {
+        showToast(
+          result.error || 'Live board not connected. Free: create Redis at console.upstash.com, add the two REST env vars in Vercel, redeploy.',
+          'error'
+        );
+      }
     });
   }
 

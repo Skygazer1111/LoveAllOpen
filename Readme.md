@@ -10,7 +10,7 @@ Official website for the **LoveAll Open Badminton Tournament 2026**, a beginner-
 - **Referee controls** — set matches live, pick winners (scores optional); knockout winners advance automatically
 - **Admin dashboard** — password-protected panel at `/#/admin` for players, pairs, groups, schedules, and results
 - **Export PDF** — download participant tables by category (and groups, if generated)
-- **Import JSON** — restore a tournament backup
+- **Import Excel** — upload the fixture spreadsheet to create players, groups, and matches
 - **WhatsApp contact** — serverless redirect; organiser phone numbers stay off the public site
 - **Instagram** — follow [@loveall_badminton](https://www.instagram.com/loveall_badminton?utm_source=qr)
 - **Privacy Policy & Terms of Use** — `/#/privacy` and `/#/terms`
@@ -92,9 +92,15 @@ WA_PRIYAN=91XXXXXXXXXX
 
 Used by the Vercel serverless function and the local Vite proxy for WhatsApp redirects.
 
-For **live fixtures on Vercel** (so other phones see referee updates), create a KV store in the project (**Storage → KV**). Vercel injects `KV_REST_API_URL` and `KV_REST_API_TOKEN`. Locally, admin publishes to `data/tournament.json`.
+For **live fixtures on Vercel** (so every phone sees the same draw) use **free Upstash Redis** — do **not** buy Vercel Storage plans:
 
-Optional: `ADMIN_SYNC_SECRET` to override the live-board publish key (defaults to the admin password).
+1. Open [console.upstash.com](https://console.upstash.com) and sign up (free)
+2. **Create → Redis Database** → pick the **Free** plan
+3. Open the DB → **REST API** → copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+4. In Vercel → **Settings → Environment Variables**, add both, then **Redeploy**
+5. In Admin, click **Publish schedule** — status should say the schedule is live
+
+Locally, publish writes `data/tournament.json` and `public/live-board.json`. Optional: `ADMIN_SYNC_SECRET` overrides the publish key (defaults to the admin password).
 
 ## Running a match day
 
@@ -108,7 +114,7 @@ Optional: `ADMIN_SYNC_SECRET` to override the live-board publish key (defaults t
 
 ## Deployment
 
-Deployed on **Vercel**. Push to `main` to build. Set `WA_PRIYAN`, and connect a Vercel KV store for the shared live board.
+Deployed on **Vercel**. Push to `main` to build. Set `WA_PRIYAN`, and add the free Upstash Redis REST URL + token for the shared live board.
 
 ## License
 
