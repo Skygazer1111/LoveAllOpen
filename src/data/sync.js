@@ -8,12 +8,14 @@
 
 import { store, ADMIN_PASSWORD } from './store.js';
 
-const POLL_MS = 8000;
+const POLL_MS = 15000;
+const POLL_HIDDEN_MS = 45000;
 let pollTimer = null;
 let publishing = false;
 let publishAgain = false;
 let pausePullUntil = 0;
 let autoPublishTimer = null;
+let pulling = false;
 
 function isAdminSession() {
   return sessionStorage.getItem('loveall_admin') === '1';
@@ -25,6 +27,11 @@ async function readJson(res) {
   } catch {
     return null;
   }
+}
+
+function boardFingerprint(data) {
+  if (!data) return '';
+  return `${Number(data.updatedAt) || 0}:${Boolean(data.settings?.schedulePublished)}`;
 }
 
 /**
@@ -108,12 +115,23 @@ export async function publishTournament(data = store.getData()) {
 export async function pullRemoteTournament({ force = false } = {}) {
   if (!force && isAdminSession()) return false;
   if (!force && Date.now() < pausePullUntil) return false;
+  if (pulling) return false;
 
-  const remote = await fetchRemoteTournament();
-  if (!remote?.categories || !remote?.settings) return false;
-  if (!remote.settings.schedulePublished) return false;
+  pulling = true;
+  try {
+    const remote = await fetchRemoteTournament();
+    if (!remote?.categories || !remote?.settings) return false;
+    if (!remote.settings.schedulePublished) return false;
 
-  return store.replaceData(remote);
+    const local = store.getData();
+    if (!force && boardFingerprint(remote) === boardFingerprint(local)) {
+      return false;
+    }
+
+    return store.replaceData(remote);
+  } finally {
+    pulling = false;
+  }
 }
 
 function queueAutoPublish() {
@@ -122,6 +140,15 @@ function queueAutoPublish() {
   autoPublishTimer = setTimeout(() => {
     publishTournament(store.getData());
   }, 600);
+}
+
+function scheduleNextPoll() {
+  clearTimeout(pollTimer);
+  const delay = document.hidden ? POLL_HIDDEN_MS : POLL_MS;
+  pollTimer = setTimeout(async () => {
+    await pullRemoteTournament();
+    scheduleNextPoll();
+  }, delay);
 }
 
 export function startLiveSync({ isAdmin = false } = {}) {
@@ -133,17 +160,23 @@ export function startLiveSync({ isAdmin = false } = {}) {
   }
 
   pullRemoteTournament();
-  pollTimer = setInterval(() => {
-    pullRemoteTournament();
-  }, POLL_MS);
+  scheduleNextPoll();
+  document.addEventListener('visibilitychange', onVisibilityChange);
+}
+
+function onVisibilityChange() {
+  if (isAdminSession()) return;
+  if (!document.hidden) pullRemoteTournament();
+  scheduleNextPoll();
 }
 
 export function stopLiveSync() {
   if (pollTimer) {
-    clearInterval(pollTimer);
+    clearTimeout(pollTimer);
     pollTimer = null;
   }
   clearTimeout(autoPublishTimer);
   autoPublishTimer = null;
   store.off('change', queueAutoPublish);
+  document.removeEventListener('visibilitychange', onVisibilityChange);
 }

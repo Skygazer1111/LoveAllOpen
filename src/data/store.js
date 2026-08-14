@@ -169,6 +169,13 @@ class Store {
     if (data.settings.courts === 2) {
       data.settings.courts = DEFAULT_COURTS;
     }
+
+    const remoteAt = Number(data.updatedAt) || 0;
+    const localAt = Number(this._data?.updatedAt) || 0;
+    if (remoteAt && localAt && remoteAt === localAt) {
+      return false;
+    }
+
     this._data = data;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this._data));

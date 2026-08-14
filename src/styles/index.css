@@ -1586,11 +1586,46 @@ h1, h2, h3, h4 {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
-  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 140px;
+  transition: border-color var(--transition-fast);
 }
-.match-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(31, 107, 69, 0.35);
+@media (hover: hover) and (pointer: fine) {
+  .match-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(31, 107, 69, 0.35);
+  }
+}
+.schedule-page .match-card:hover {
+  transform: none;
+}
+.schedule-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 18px;
+}
+.schedule-toggle-row-spaced {
+  margin-bottom: 20px;
+}
+.match-band-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  margin-left: 8px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--forest);
+  background: rgba(31, 107, 69, 0.1);
+}
+.schedule-page [data-reveal] {
+  opacity: 1;
+  transform: none;
 }
 .match-card-header {
   display: flex;

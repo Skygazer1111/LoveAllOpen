@@ -63,12 +63,13 @@ renderPage(initialRoute);
 
 // Public pages may pull the live board. Skip while admin is logged in
 // so a stale remote never overwrites a fresh admin save.
+// Fixtures soft-updates via store listeners — never remount that page mid-scroll.
 if (sessionStorage.getItem('loveall_admin') !== '1') {
   pullRemoteTournament().then((updated) => {
-    if (updated && sessionStorage.getItem('loveall_admin') !== '1') {
-      const path = window.location.hash.slice(1) || '/';
-      const route = routes.find(r => r.path === path) || routes[0];
-      renderPage(route);
-    }
+    if (!updated || sessionStorage.getItem('loveall_admin') === '1') return;
+    const path = window.location.hash.slice(1) || '/';
+    if (path === '/schedule') return;
+    const route = routes.find(r => r.path === path) || routes[0];
+    renderPage(route);
   });
 }

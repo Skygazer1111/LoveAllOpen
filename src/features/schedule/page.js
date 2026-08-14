@@ -1,5 +1,5 @@
 /**
- * Schedule Page — Public fixtures & results
+ * Schedule Page — Public fixtures & results (optimized for phones)
  */
 
 import { store, getParticipantDisplayName } from '../../data/store.js';
@@ -7,11 +7,15 @@ import { startLiveSync } from '../../data/sync.js';
 import { renderGroupStandings } from '../../ui/tournament/group-table.js';
 import { renderMatchCard } from '../../ui/tournament/match-card.js';
 import { renderBracket } from '../../ui/tournament/bracket.js';
-import { initMotion } from '../../ui/motion.js';
 import { renderFooter } from '../../ui/layout/footer.js';
 
 let currentCategory = 'mens-singles';
 let onStoreChange = null;
+let lastContentKey = '';
+let refreshTimer = null;
+let showCompleted = false;
+let showStandings = false;
+let showBracket = true;
 
 function timeSort(item) {
   const t = item.match.scheduledTime || '99:99';
@@ -19,13 +23,52 @@ function timeSort(item) {
   return `${t}-${court}-${item.match.matchNumber}`;
 }
 
+function contentKey(categoryId) {
+  const data = store.getData();
+  const cat = store.getCategory(categoryId);
+  if (!cat) return `${categoryId}:empty`;
+  let live = 0;
+  let done = 0;
+  let scored = 0;
+  for (const group of cat.groups || []) {
+    for (const match of group.matches || []) {
+      if (match.status === 'live') live++;
+      else if (match.status === 'completed') done++;
+      if (match.winner) scored++;
+    }
+  }
+  for (const round of cat.knockout?.rounds || []) {
+    for (const match of round.matches || []) {
+      if (match.status === 'live') live++;
+      else if (match.status === 'completed') done++;
+      if (match.winner) scored++;
+      if (match.player1Id) scored++;
+      if (match.player2Id) scored++;
+    }
+  }
+  return [
+    categoryId,
+    Number(data?.updatedAt) || 0,
+    store.isSchedulePublished() ? 1 : 0,
+    showCompleted ? 1 : 0,
+    showStandings ? 1 : 0,
+    showBracket ? 1 : 0,
+    live,
+    done,
+    scored,
+    cat.groups?.length || 0,
+    cat.knockout?.rounds?.length || 0
+  ].join(':');
+}
+
 export function renderSchedulePage() {
   const settings = store.getSettings();
   const categories = store.getCategories();
+  lastContentKey = '';
 
   return `
-    <div class="page" id="schedule-page">
-      <header class="page-hero">
+    <div class="page schedule-page" id="schedule-page">
+      <header class="page-hero page-hero-compact">
         <div class="page-hero-inner">
           <p class="eyebrow">Fixtures</p>
           <h1 class="page-title">Match schedule</h1>
@@ -66,6 +109,7 @@ function renderMatchBand(title, items, categoryId, extraClass = '') {
     <h3 class="match-band-title ${extraClass}">
       ${extraClass === 'live' ? '<span class="live-dot"></span>' : ''}
       ${title}
+      <span class="match-band-count">${items.length}</span>
     </h3>
     <div class="match-grid ${extraClass === 'live' ? 'match-grid-live' : ''}">
       ${items.map(item => renderMatchCard(categoryId, item.match, {
@@ -84,9 +128,11 @@ function renderScheduleContent(categoryId) {
   const cat = store.getCategory(categoryId);
   if (!cat) return '';
 
+  lastContentKey = contentKey(categoryId);
+
   if (!store.isSchedulePublished()) {
     return `
-      <div class="empty-state" data-reveal>
+      <div class="empty-state">
         <div class="empty-state-title">Fixtures coming soon</div>
         <div class="empty-state-text">
           The ${cat.name} schedule hasn’t been published yet. Check back once the organiser releases the draw.
@@ -96,7 +142,6 @@ function renderScheduleContent(categoryId) {
   }
 
   const groups = store.getGroups(categoryId);
-  store.refreshKnockout(categoryId);
   const knockout = store.getKnockout(categoryId);
   const board = store.listBoardMatches(categoryId);
   const hasGroups = groups.length > 0;
@@ -104,7 +149,7 @@ function renderScheduleContent(categoryId) {
 
   if (!hasGroups && !hasKnockout) {
     return `
-      <div class="empty-state" data-reveal>
+      <div class="empty-state">
         <div class="empty-state-title">Fixtures coming soon</div>
         <div class="empty-state-text">
           The ${cat.name} draw hasn’t been published yet. Check back once the admin releases the schedule.
@@ -113,7 +158,7 @@ function renderScheduleContent(categoryId) {
     `;
   }
 
-  const playable = board.filter(item => item.match.player1Id || item.match.player2Id);
+  const playable = board.filter(item => item.match.player1Id || item.match.player2Id || item.match.player1Seed || item.match.player2Seed);
   const live = playable.filter(item => item.match.status === 'live');
   const upcoming = playable
     .filter(item => item.match.status === 'upcoming')
@@ -128,7 +173,7 @@ function renderScheduleContent(categoryId) {
 
   if (champion) {
     html += `
-      <section class="section champion-banner" data-reveal>
+      <section class="section champion-banner">
         <p class="eyebrow">Champion</p>
         <h2 class="section-heading">${getParticipantDisplayName(champion)}</h2>
         <p class="section-copy">${cat.name} winner</p>
@@ -137,7 +182,7 @@ function renderScheduleContent(categoryId) {
   }
 
   html += `
-    <section class="section" data-reveal>
+    <section class="section schedule-board">
       <div class="section-intro">
         <p class="eyebrow">Board</p>
         <h2 class="section-heading">All matches</h2>
@@ -145,41 +190,60 @@ function renderScheduleContent(categoryId) {
       </div>
       ${renderMatchBand('Live now', live, categoryId, 'live')}
       ${renderMatchBand('Upcoming', upcoming, categoryId)}
-      ${renderMatchBand('Completed', completed, categoryId)}
+      ${completed.length ? `
+        <div class="schedule-toggle-row">
+          <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-completed" aria-expanded="${showCompleted}">
+            ${showCompleted ? 'Hide' : 'Show'} completed (${completed.length})
+          </button>
+        </div>
+        ${showCompleted ? renderMatchBand('Completed', completed, categoryId) : ''}
+      ` : ''}
       ${playable.length === 0 ? '<p class="text-muted">No matches listed yet.</p>' : ''}
     </section>
   `;
 
   if (hasGroups) {
     html += `
-      <section class="section" data-reveal>
-        <div class="section-intro">
-          <p class="eyebrow">Standings</p>
-          <h2 class="section-heading">Group stage</h2>
+      <section class="section">
+        <div class="schedule-toggle-row schedule-toggle-row-spaced">
+          <div class="section-intro" style="margin:0;">
+            <p class="eyebrow">Standings</p>
+            <h2 class="section-heading">Group stage</h2>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-standings" aria-expanded="${showStandings}">
+            ${showStandings ? 'Hide' : 'Show'} tables
+          </button>
         </div>
-        <div class="groups-grid">
-          ${groups.map(group => `
-            <div class="group-card">
-              <div class="group-card-header">
-                <span class="group-name">${group.name}</span>
-                <span class="group-count">${group.participantIds.length} players</span>
+        ${showStandings ? `
+          <div class="groups-grid">
+            ${groups.map(group => `
+              <div class="group-card">
+                <div class="group-card-header">
+                  <span class="group-name">${group.name}</span>
+                  <span class="group-count">${group.participantIds.length} players</span>
+                </div>
+                ${renderGroupStandings(categoryId, group.id)}
               </div>
-              ${renderGroupStandings(categoryId, group.id)}
-            </div>
-          `).join('')}
-        </div>
+            `).join('')}
+          </div>
+        ` : ''}
       </section>
     `;
   }
 
   if (hasKnockout) {
     html += `
-      <section class="section" data-reveal>
-        <div class="section-intro">
-          <p class="eyebrow">Knockout</p>
-          <h2 class="section-heading">Bracket</h2>
+      <section class="section">
+        <div class="schedule-toggle-row schedule-toggle-row-spaced">
+          <div class="section-intro" style="margin:0;">
+            <p class="eyebrow">Knockout</p>
+            <h2 class="section-heading">Bracket</h2>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-bracket" aria-expanded="${showBracket}">
+            ${showBracket ? 'Hide' : 'Show'} bracket
+          </button>
         </div>
-        ${renderBracket(categoryId, false)}
+        ${showBracket ? renderBracket(categoryId, false) : ''}
       </section>
     `;
   }
@@ -187,10 +251,43 @@ function renderScheduleContent(categoryId) {
   return html;
 }
 
-function refreshScheduleContent() {
+function bindScheduleToggles() {
+  document.getElementById('btn-toggle-completed')?.addEventListener('click', () => {
+    showCompleted = !showCompleted;
+    refreshScheduleContent({ force: true });
+  });
+  document.getElementById('btn-toggle-standings')?.addEventListener('click', () => {
+    showStandings = !showStandings;
+    refreshScheduleContent({ force: true });
+  });
+  document.getElementById('btn-toggle-bracket')?.addEventListener('click', () => {
+    showBracket = !showBracket;
+    refreshScheduleContent({ force: true });
+  });
+}
+
+function refreshScheduleContent({ force = false } = {}) {
   const content = document.getElementById('schedule-content');
   if (!content) return;
+
+  const nextKey = contentKey(currentCategory);
+  if (!force && nextKey === lastContentKey && content.childElementCount > 0) {
+    return;
+  }
+
+  const y = window.scrollY;
   content.innerHTML = renderScheduleContent(currentCategory);
+  bindScheduleToggles();
+  window.scrollTo(0, y);
+}
+
+function queueScheduleRefresh() {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => {
+    if (document.getElementById('schedule-page')) {
+      refreshScheduleContent();
+    }
+  }, 120);
 }
 
 export function initSchedulePage() {
@@ -198,24 +295,25 @@ export function initSchedulePage() {
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       currentCategory = tab.dataset.category;
+      showCompleted = false;
+      showStandings = false;
+      showBracket = true;
       tabs.forEach(t => {
         t.classList.remove('active');
         t.setAttribute('aria-selected', 'false');
       });
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
-      refreshScheduleContent();
-      initMotion(document.getElementById('schedule-content'));
+      refreshScheduleContent({ force: true });
+      window.scrollTo(0, 0);
     });
   });
 
   if (onStoreChange) store.off('change', onStoreChange);
-  onStoreChange = () => {
-    if (document.getElementById('schedule-page')) refreshScheduleContent();
-  };
+  onStoreChange = () => queueScheduleRefresh();
   store.on('change', onStoreChange);
+  bindScheduleToggles();
   startLiveSync();
-  initMotion(document.getElementById('schedule-page') || document);
 }
 
 export function getScheduleCurrentCategory() {
