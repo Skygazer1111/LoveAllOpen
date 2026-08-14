@@ -4,6 +4,7 @@
 
 export const STORAGE_KEY = 'loveall_tournament_2026';
 export const ADMIN_PASSWORD = 'loveall2026';
+export const DEFAULT_COURTS = 4;
 
 export const DEFAULT_DATA = {
   settings: {
@@ -14,7 +15,7 @@ export const DEFAULT_DATA = {
     venueShort: 'Toneup Badminton, Thoraipakkam',
     mapsQuery: 'Toneup Badminton Thoraipakkam Chennai',
     shuttles: 'Yonex Mavis 350',
-    courts: 2,
+    courts: DEFAULT_COURTS,
     level: 'Beginner Level',
     schedulePublished: false,
     publishedAt: null

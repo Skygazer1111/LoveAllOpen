@@ -3,6 +3,7 @@
  */
 
 import { store, getParticipantDisplayName } from '../../data/store.js';
+import { DEFAULT_COURTS } from '../../data/defaults.js';
 import { publishTournament, startLiveSync } from '../../data/sync.js';
 import { showModal, closeModal, showConfirm, showToast } from '../../ui/feedback/modal.js';
 import { renderGroupStandings } from '../../ui/tournament/group-table.js';
@@ -107,7 +108,7 @@ function renderEventDetailsSection() {
         </div>
         <div class="input-group">
           <label class="input-label" for="setting-courts">Courts</label>
-          <input type="number" class="input" id="setting-courts" min="1" value="${s.courts ?? 2}" />
+          <input type="number" class="input" id="setting-courts" min="1" value="${s.courts ?? DEFAULT_COURTS}" />
         </div>
         <div class="input-group">
           <label class="input-label" for="setting-maps">Maps search query</label>
@@ -428,14 +429,14 @@ function bindSettingsEvents() {
       venueShort: document.getElementById('setting-venue-short')?.value?.trim() || '',
       venue: document.getElementById('setting-venue')?.value?.trim() || '',
       shuttles: document.getElementById('setting-shuttles')?.value?.trim() || '',
-      courts: Number.isFinite(courts) && courts > 0 ? courts : 2,
+      courts: Number.isFinite(courts) && courts > 0 ? courts : DEFAULT_COURTS,
       mapsQuery: document.getElementById('setting-maps')?.value?.trim() || ''
     });
 
     // Keep the form in sync with what was actually stored
     const saved = store.getSettings();
     const courtsInput = document.getElementById('setting-courts');
-    if (courtsInput) courtsInput.value = String(saved.courts ?? 2);
+    if (courtsInput) courtsInput.value = String(saved.courts ?? DEFAULT_COURTS);
 
     const ok = await publishTournament(store.getData());
     const status = document.getElementById('live-sync-status');
@@ -605,7 +606,7 @@ function openBulkScheduleModal(categoryId) {
       </div>
       <div class="input-group">
         <label class="input-label">Courts in use</label>
-        <input type="number" class="input" id="bulk-courts" min="1" max="8" value="${settings.courts || 2}" />
+        <input type="number" class="input" id="bulk-courts" min="1" max="8" value="${settings.courts || DEFAULT_COURTS}" />
       </div>
       <div class="input-group">
         <label class="input-label">League rest gap (slots)</label>
@@ -618,7 +619,7 @@ function openBulkScheduleModal(categoryId) {
       store.scheduleCategoryMatches(categoryId, {
         startTime: document.getElementById('bulk-start-time')?.value || '09:00',
         intervalMins: parseInt(document.getElementById('bulk-interval')?.value || '15', 10),
-        courts: parseInt(document.getElementById('bulk-courts')?.value || '2', 10),
+        courts: parseInt(document.getElementById('bulk-courts')?.value || String(DEFAULT_COURTS), 10),
         leagueGapSlots: parseInt(document.getElementById('bulk-league-gap')?.value || '1', 10)
       });
       closeModal();
@@ -715,7 +716,7 @@ window.setFixtureLive = function(categoryId, stage, loc, matchId) {
 window.openScheduleModal = function(categoryId, stage, loc, matchId) {
   const { match } = getFixture(categoryId, stage, loc, matchId);
   if (!match) return;
-  const courts = store.getSettings().courts || 2;
+  const courts = store.getSettings().courts || DEFAULT_COURTS;
 
   showModal({
     title: 'Match time & court',

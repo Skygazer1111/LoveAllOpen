@@ -2,7 +2,7 @@
  * Tournament data store — localStorage persistence + domain operations
  */
 
-import { STORAGE_KEY, ADMIN_PASSWORD, DEFAULT_DATA } from './defaults.js';
+import { STORAGE_KEY, ADMIN_PASSWORD, DEFAULT_DATA, DEFAULT_COURTS } from './defaults.js';
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
@@ -129,6 +129,10 @@ class Store {
             }
           }
         }
+        if (this._data.settings.courts === 2) {
+          this._data.settings.courts = DEFAULT_COURTS;
+          this.save();
+        }
       } else {
         this._data = JSON.parse(JSON.stringify(DEFAULT_DATA));
       }
@@ -156,6 +160,9 @@ class Store {
     // Keep settings numbers typed correctly after JSON round-trips
     if (data.settings.courts != null) {
       data.settings.courts = parseInt(data.settings.courts, 10) || data.settings.courts;
+    }
+    if (data.settings.courts === 2) {
+      data.settings.courts = DEFAULT_COURTS;
     }
     this._data = data;
     try {
@@ -187,7 +194,7 @@ class Store {
     const next = { ...updates };
     if (next.courts !== undefined) {
       const n = parseInt(next.courts, 10);
-      next.courts = Number.isFinite(n) && n > 0 ? n : 2;
+      next.courts = Number.isFinite(n) && n > 0 ? n : DEFAULT_COURTS;
     }
     Object.assign(this._data.settings, next);
     this.save();
@@ -668,7 +675,7 @@ class Store {
     this.emit('change');
   }
 
-  scheduleCategoryMatches(categoryId, { startTime = '09:00', intervalMins = 15, courts = 2, leagueGapSlots = 1 } = {}) {
+  scheduleCategoryMatches(categoryId, { startTime = '09:00', intervalMins = 15, courts = DEFAULT_COURTS, leagueGapSlots = 1 } = {}) {
     const cat = this._data.categories[categoryId];
     if (!cat) return;
 
@@ -688,7 +695,7 @@ class Store {
       }
     }
 
-    const courtCount = Math.max(1, parseInt(courts, 10) || 2);
+    const courtCount = Math.max(1, parseInt(courts, 10) || DEFAULT_COURTS);
     const step = Math.max(5, parseInt(intervalMins, 10) || 15);
     const gap = Math.max(1, parseInt(leagueGapSlots, 10) || 1);
 
