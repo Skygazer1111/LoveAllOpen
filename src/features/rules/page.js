@@ -19,25 +19,17 @@ const RULE_SECTIONS = [
       {
         title: 'Golden point',
         text: 'At 20–20, the next point wins the game — no extra points beyond 21.'
-      },
-      {
-        title: 'Best of three',
-        text: 'Matches are best of 3 games. Win 2 games to take the match.'
       }
     ]
   },
   {
     id: 'court',
-    title: 'Court & intervals',
+    title: 'Court',
     icon: 'bx-transfer-alt',
     rules: [
       {
         title: 'Side change at 11',
         text: 'In the third game, players change ends when one side reaches 11 points.'
-      },
-      {
-        title: 'Interval at 11',
-        text: 'A short break is taken when either side reaches 11 points in the first two games.'
       }
     ]
   },
