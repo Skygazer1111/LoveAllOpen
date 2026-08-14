@@ -2,7 +2,7 @@
  * Match Card Component
  */
 
-import { store, formatMatchTime, getParticipantDisplayName } from '../../data/store.js';
+import { store, formatMatchTime, getMatchSideName } from '../../data/store.js';
 
 export function renderMatchMeta(match) {
   const bits = [];
@@ -24,8 +24,8 @@ export function renderMatchCard(categoryId, match, options = {}) {
 
   const p1 = store.getParticipantById(categoryId, match.player1Id);
   const p2 = store.getParticipantById(categoryId, match.player2Id);
-  const name1 = getParticipantDisplayName(p1);
-  const name2 = getParticipantDisplayName(p2);
+  const name1 = getMatchSideName(categoryId, match, 1);
+  const name2 = getMatchSideName(categoryId, match, 2);
   const stageLabel = label || groupName;
   const when = renderMatchMeta(match);
 
@@ -53,12 +53,12 @@ export function renderMatchCard(categoryId, match, options = {}) {
       ${when ? `<p class="match-card-when">${when}</p>` : ''}
       <div class="match-card-players">
         <div class="match-player ${p1Winner ? 'winner' : ''}">
-          <span class="match-player-name">${name1}</span>
+          <span class="match-player-name ${!p1 ? 'tbd' : ''}">${name1}</span>
           <span class="match-player-score">${match.score1 !== null ? match.score1 : '-'}</span>
         </div>
         <div class="match-vs">${isDraw ? 'DRAW' : 'VS'}</div>
         <div class="match-player ${p2Winner ? 'winner' : ''}">
-          <span class="match-player-name">${name2}</span>
+          <span class="match-player-name ${!p2 ? 'tbd' : ''}">${name2}</span>
           <span class="match-player-score">${match.score2 !== null ? match.score2 : '-'}</span>
         </div>
       </div>

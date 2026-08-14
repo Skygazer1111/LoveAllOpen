@@ -1706,6 +1706,7 @@ h1, h2, h3, h4 {
   background: rgba(214, 239, 74, 0.45);
 }
 .match-player-name { font-weight: 600; }
+.match-player-name.tbd { color: var(--text-muted); font-style: italic; font-weight: 400; }
 .match-player-score {
   font-family: var(--font-heading);
   font-weight: 800;

@@ -96,6 +96,7 @@ function renderScheduleContent(categoryId) {
   }
 
   const groups = store.getGroups(categoryId);
+  store.refreshKnockout(categoryId);
   const knockout = store.getKnockout(categoryId);
   const board = store.listBoardMatches(categoryId);
   const hasGroups = groups.length > 0;

@@ -114,23 +114,56 @@ function isSeedPlaceholder(text) {
   return /^(group\s+\S+\s*#\s*\d+|winner\b)/.test(t) || /\b#\s*\d+\s*$/.test(t);
 }
 
+function parseSeed(text) {
+  const raw = cellText(text);
+  if (!raw) return null;
+  const groupRank = raw.match(/^group\s+(\S+)\s*#\s*(\d+)$/i);
+  if (groupRank) {
+    const rank = parseInt(groupRank[2], 10);
+    return {
+      type: 'group',
+      group: groupRank[1],
+      rank,
+      label: `Group ${groupRank[1]} #${rank}`
+    };
+  }
+  const winner = raw.match(/^winner\s+(.+)$/i);
+  if (winner) {
+    return {
+      type: 'winner',
+      slot: winner[1].trim(),
+      label: `Winner ${winner[1].trim()}`
+    };
+  }
+  return { type: 'tbd', label: raw };
+}
+
 function parseMatchSides(text) {
   const raw = cellText(text);
-  if (!raw) return { side1: null, side2: null, placeholder: true };
+  if (!raw) return { side1: null, side2: null, placeholder: true, seed1: null, seed2: null };
   const split = raw.split(/\s+v(?:s\.?)?\s+/i);
   if (split.length < 2) {
-    return { side1: null, side2: null, placeholder: true, label: raw };
+    return { side1: null, side2: null, placeholder: true, label: raw, seed1: null, seed2: null };
   }
   const left = split[0];
   const right = split.slice(1).join(' vs ');
   if (isSeedPlaceholder(left) || isSeedPlaceholder(right)) {
-    return { side1: null, side2: null, placeholder: true, label: raw };
+    return {
+      side1: null,
+      side2: null,
+      placeholder: true,
+      label: raw,
+      seed1: parseSeed(left),
+      seed2: parseSeed(right)
+    };
   }
   return {
     side1: parseTeam(left),
     side2: parseTeam(right),
     placeholder: false,
-    label: raw
+    label: raw,
+    seed1: null,
+    seed2: null
   };
 }
 
@@ -254,7 +287,7 @@ function parseLegacyGroups(rows, payload, warnings) {
   }
 }
 
-function pushMatch(payload, warnings, { categoryId, stage, scheduledTime, court, matchText, groupName, rowLabel }) {
+function pushMatch(payload, warnings, { categoryId, stage, scheduledTime, court, matchText, groupName, slotLabel, rowLabel }) {
   if (!categoryId || !stage) {
     warnings.push(`Skipped ${rowLabel}: could not read event`);
     return;
@@ -269,7 +302,10 @@ function pushMatch(payload, warnings, { categoryId, stage, scheduledTime, court,
     placeholder: sides.placeholder,
     label: sides.label || matchText,
     stage,
-    groupName: groupName || null
+    groupName: groupName || null,
+    slotLabel: slotLabel || null,
+    seed1: sides.seed1 || null,
+    seed2: sides.seed2 || null
   };
 
   if (stage === 'group') {
@@ -320,6 +356,7 @@ function parseGridSchedule(rows, headerIdx, payload, warnings) {
         court: col.court,
         matchText: parsed.matchText,
         groupName,
+        slotLabel: stage === 'group' ? null : parsed.stageLabel,
         rowLabel: `row ${i + 1} court ${col.court}`
       });
     }

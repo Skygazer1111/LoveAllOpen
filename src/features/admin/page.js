@@ -344,6 +344,7 @@ function renderMatchesSection(categoryId, cat) {
 }
 
 function renderKnockoutSection(categoryId, cat) {
+  store.refreshKnockout(categoryId);
   const groups = store.getGroups(categoryId);
   const knockout = store.getKnockout(categoryId);
   const hasKnockout = knockout.rounds && knockout.rounds.length > 0;

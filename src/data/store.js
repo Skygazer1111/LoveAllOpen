@@ -129,10 +129,15 @@ class Store {
             }
           }
         }
+        let shouldSave = false;
         if (this._data.settings.courts === 2) {
           this._data.settings.courts = DEFAULT_COURTS;
-          this.save();
+          shouldSave = true;
         }
+        for (const catId of Object.keys(this._data.categories || {})) {
+          shouldSave = this._syncKnockoutSeeds(catId) || shouldSave;
+        }
+        if (shouldSave) this.save();
       } else {
         this._data = JSON.parse(JSON.stringify(DEFAULT_DATA));
       }
@@ -355,6 +360,7 @@ class Store {
     if (!found) return false;
     const { match } = found;
     applyMatchResult(match, { winnerId, score1, score2, allowDraw: true });
+    this._syncKnockoutSeeds(categoryId);
     this.save();
     this.emit('change');
     return true;
@@ -381,6 +387,7 @@ class Store {
     const found = this._findGroupMatch(categoryId, groupId, matchId);
     if (!found) return;
     resetMatchResult(found.match);
+    this._syncKnockoutSeeds(categoryId);
     this.save();
     this.emit('change');
   }
@@ -644,6 +651,7 @@ class Store {
     const ok = applyMatchResult(match, { winnerId, score1, score2, allowDraw: false });
     if (!ok || !match.winner) return false;
     this._placeWinnerInNextRound(cat, roundIndex, matchIdx, match.winner);
+    this._syncKnockoutSeeds(categoryId);
     this.save();
     this.emit('change');
     return true;
@@ -671,8 +679,171 @@ class Store {
     if (!found) return;
     resetMatchResult(found.match);
     this._cascadeClearFrom(found.cat, roundIndex, found.matchIdx);
+    this._syncKnockoutSeeds(categoryId);
     this.save();
     this.emit('change');
+  }
+
+  _groupToken(name) {
+    return String(name || '')
+      .trim()
+      .toLowerCase()
+      .replace(/^group\s+/, '');
+  }
+
+  _slotToken(value) {
+    return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  _sortedGroups(cat) {
+    return [...(cat.groups || [])].sort((a, b) =>
+      this._groupToken(a.name).localeCompare(this._groupToken(b.name), undefined, { numeric: true })
+    );
+  }
+
+  _groupLabel(group) {
+    return String(group?.name || '').replace(/^group\s+/i, '').trim() || this._groupToken(group?.name);
+  }
+
+  _makeGroupSeed(group, rank) {
+    if (!group || !rank) return null;
+    const label = group.name || `Group ${this._groupLabel(group)}`;
+    return {
+      type: 'group',
+      group: this._groupLabel(group),
+      rank,
+      label: `${label} #${rank}`
+    };
+  }
+
+  _makeWinnerSeed(slotLabel) {
+    if (!slotLabel) return null;
+    return {
+      type: 'winner',
+      slot: slotLabel,
+      label: `Winner ${slotLabel}`
+    };
+  }
+
+  _firstRoundSeeds(groups, matchCount, matchIdx) {
+    if (groups.length >= 2 && matchCount === 2) {
+      const [g0, g1] = groups;
+      return matchIdx === 0
+        ? [this._makeGroupSeed(g0, 1), this._makeGroupSeed(g1, 2)]
+        : [this._makeGroupSeed(g1, 1), this._makeGroupSeed(g0, 2)];
+    }
+    if (groups.length >= 4 && matchCount === 4) {
+      const pairs = [
+        [this._makeGroupSeed(groups[0], 1), this._makeGroupSeed(groups[1], 2)],
+        [this._makeGroupSeed(groups[1], 1), this._makeGroupSeed(groups[0], 2)],
+        [this._makeGroupSeed(groups[2], 1), this._makeGroupSeed(groups[3], 2)],
+        [this._makeGroupSeed(groups[3], 1), this._makeGroupSeed(groups[2], 2)]
+      ];
+      return pairs[matchIdx] || null;
+    }
+    return null;
+  }
+
+  _ensureKnockoutSeeds(cat, categoryId) {
+    const rounds = cat.knockout?.rounds || [];
+    if (!rounds.length) return false;
+    const groups = this._sortedGroups(cat);
+    const prefix = categoryId === 'mens-singles' ? 'MS' : categoryId === 'mens-doubles' ? 'MD' : 'MX';
+    let changed = false;
+
+    rounds.forEach((round, roundIdx) => {
+      const matches = round.matches || [];
+      matches.forEach((match, matchIdx) => {
+        if (!match.slotLabel) {
+          const n = matchIdx + 1;
+          if (/final/i.test(round.name) && matches.length === 1) match.slotLabel = `${prefix} Final`;
+          else if (/semi/i.test(round.name)) match.slotLabel = `${prefix} SF ${n}`;
+          else if (/quarter/i.test(round.name)) match.slotLabel = `${prefix} QF ${n}`;
+          else match.slotLabel = `${prefix} R${roundIdx + 1}-${n}`;
+          changed = true;
+        }
+
+        if (match.player1Seed && match.player2Seed) return;
+
+        if (roundIdx === 0) {
+          const pairing = this._firstRoundSeeds(groups, matches.length, matchIdx);
+          if (pairing) {
+            if (!match.player1Seed) { match.player1Seed = pairing[0]; changed = true; }
+            if (!match.player2Seed) { match.player2Seed = pairing[1]; changed = true; }
+          }
+        } else {
+          const prev = rounds[roundIdx - 1]?.matches || [];
+          const left = prev[matchIdx * 2];
+          const right = prev[matchIdx * 2 + 1];
+          if (!match.player1Seed) { match.player1Seed = this._makeWinnerSeed(left?.slotLabel); changed = true; }
+          if (!match.player2Seed) { match.player2Seed = this._makeWinnerSeed(right?.slotLabel); changed = true; }
+        }
+      });
+    });
+    return changed;
+  }
+
+  _findGroupBySeed(cat, groupToken) {
+    const wanted = this._groupToken(groupToken);
+    return (cat.groups || []).find((g) => this._groupToken(g.name) === wanted) || null;
+  }
+
+  _findKnockoutBySlot(cat, slot) {
+    const wanted = this._slotToken(slot);
+    if (!wanted) return null;
+    for (const round of cat.knockout?.rounds || []) {
+      for (const match of round.matches || []) {
+        if (this._slotToken(match.slotLabel) === wanted) return match;
+      }
+    }
+    return null;
+  }
+
+  _isGroupComplete(group) {
+    if (!group?.matches?.length) return false;
+    return group.matches.every((m) => m.status === 'completed' || Boolean(m.winner));
+  }
+
+  _resolveSeed(categoryId, cat, seed) {
+    if (!seed) return null;
+    if (seed.type === 'group') {
+      const group = this._findGroupBySeed(cat, seed.group);
+      if (!group || !this._isGroupComplete(group)) return null;
+      const standings = this.getGroupStandings(categoryId, group.id);
+      return standings[seed.rank - 1]?.participantId || null;
+    }
+    if (seed.type === 'winner') {
+      const source = this._findKnockoutBySlot(cat, seed.slot);
+      if (!source || source.status !== 'completed') return null;
+      return source.winner || null;
+    }
+    return null;
+  }
+
+  _syncKnockoutSeeds(categoryId) {
+    const cat = this.getCategory(categoryId);
+    if (!cat?.knockout?.rounds) return false;
+    let changed = this._ensureKnockoutSeeds(cat, categoryId);
+    for (const round of cat.knockout.rounds) {
+      for (const match of round.matches || []) {
+        if (!match.player1Seed && !match.player2Seed) continue;
+        if (match.status === 'completed') continue;
+        const p1 = this._resolveSeed(categoryId, cat, match.player1Seed);
+        const p2 = this._resolveSeed(categoryId, cat, match.player2Seed);
+        if (match.player1Id !== p1 || match.player2Id !== p2) {
+          match.player1Id = p1;
+          match.player2Id = p2;
+          changed = true;
+        }
+      }
+    }
+    return changed;
+  }
+
+  refreshKnockout(categoryId) {
+    const changed = this._syncKnockoutSeeds(categoryId);
+    if (changed) this.save();
+    return changed;
   }
 
   scheduleCategoryMatches(categoryId, { startTime = '09:00', intervalMins = 15, courts = DEFAULT_COURTS, leagueGapSlots = 1 } = {}) {
@@ -957,11 +1128,15 @@ class Store {
             );
             match.scheduledTime = row.scheduledTime || '';
             match.court = row.court ?? null;
+            match.slotLabel = row.slotLabel || '';
+            match.player1Seed = row.seed1 || null;
+            match.player2Seed = row.seed2 || null;
             return match;
           })
         });
       }
       cat.knockout = { rounds };
+      this._syncKnockoutSeeds(catId);
     }
 
     const maxCourts = parseInt(payload.maxCourts, 10);
@@ -995,3 +1170,13 @@ class Store {
 // Singleton
 export const store = new Store();
 export { ADMIN_PASSWORD };
+
+export function getMatchSideName(categoryId, match, side, fallback = 'TBD') {
+  const id = side === 1 ? match.player1Id : match.player2Id;
+  if (id) {
+    const participant = store.getParticipantById(categoryId, id);
+    if (participant) return getParticipantDisplayName(participant, fallback);
+  }
+  const seed = side === 1 ? match.player1Seed : match.player2Seed;
+  return seed?.label || fallback;
+}
