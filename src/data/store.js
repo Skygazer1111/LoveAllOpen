@@ -843,6 +843,130 @@ class Store {
     }
   }
 
+  /**
+   * Replace participants, groups, and fixtures from a parsed Excel draw.
+   * Keeps event settings; marks the schedule as draft until re-published.
+   */
+  importExcelDraw(payload) {
+    if (!payload?.categories) return { ok: false, unmatched: [] };
+
+    const unmatched = [];
+    const roundOrder = [
+      { stage: 'qf', name: 'Quarter Finals' },
+      { stage: 'sf', name: 'Semi Finals' },
+      { stage: 'final', name: 'Final' }
+    ];
+
+    const keyOf = (member) => {
+      if (!member) return '';
+      const norm = (s) => String(s || '')
+        .toLowerCase()
+        .replace(/[’']/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (member.name) return `s:${norm(member.name)}`;
+      return `d:${[norm(member.player1), norm(member.player2)].sort().join('|')}`;
+    };
+
+    for (const catId of Object.keys(this._data.categories)) {
+      const cat = this._data.categories[catId];
+      const incoming = payload.categories[catId];
+      cat.participants = [];
+      cat.groups = [];
+      cat.knockout = { rounds: [] };
+      if (!incoming) continue;
+
+      const idByKey = new Map();
+      const addMember = (member) => {
+        const key = keyOf(member);
+        if (!key) return null;
+        if (idByKey.has(key)) return idByKey.get(key);
+        const participant = member.name
+          ? { id: generateId(), name: member.name }
+          : { id: generateId(), player1: member.player1, player2: member.player2 };
+        cat.participants.push(participant);
+        idByKey.set(key, participant.id);
+        return participant.id;
+      };
+
+      for (const group of incoming.groups || []) {
+        const participantIds = [];
+        for (const member of group.members || []) {
+          const id = addMember(member);
+          if (id && !participantIds.includes(id)) participantIds.push(id);
+        }
+        cat.groups.push({
+          id: generateId(),
+          name: group.name,
+          participantIds,
+          matches: []
+        });
+      }
+
+      const groupByParticipant = new Map();
+      for (const group of cat.groups) {
+        for (const id of group.participantIds) groupByParticipant.set(id, group);
+      }
+
+      let matchNumByGroup = new Map();
+      for (const row of incoming.groupMatches || []) {
+        const id1 = idByKey.get(keyOf(row.side1));
+        const id2 = idByKey.get(keyOf(row.side2));
+        if (!id1 || !id2) {
+          unmatched.push(row.label || 'Unnamed group match');
+          continue;
+        }
+        const group = groupByParticipant.get(id1);
+        const group2 = groupByParticipant.get(id2);
+        if (!group || group !== group2) {
+          unmatched.push(row.label || 'Group match with mixed groups');
+          continue;
+        }
+        const n = (matchNumByGroup.get(group.id) || 0) + 1;
+        matchNumByGroup.set(group.id, n);
+        const match = createMatch(n, id1, id2);
+        match.scheduledTime = row.scheduledTime || '';
+        match.court = row.court ?? null;
+        group.matches.push(match);
+      }
+
+      const rounds = [];
+      for (const roundDef of roundOrder) {
+        const rows = (incoming.knockoutMatches || []).filter((m) => m.stage === roundDef.stage);
+        if (rows.length === 0) continue;
+        rows.sort((a, b) => {
+          const t = String(a.scheduledTime || '').localeCompare(String(b.scheduledTime || ''));
+          if (t !== 0) return t;
+          return (a.court || 0) - (b.court || 0);
+        });
+        rounds.push({
+          name: roundDef.name,
+          matches: rows.map((row, idx) => {
+            const match = createMatch(
+              idx + 1,
+              row.placeholder ? null : (idByKey.get(keyOf(row.side1)) || null),
+              row.placeholder ? null : (idByKey.get(keyOf(row.side2)) || null)
+            );
+            match.scheduledTime = row.scheduledTime || '';
+            match.court = row.court ?? null;
+            return match;
+          })
+        });
+      }
+      cat.knockout = { rounds };
+    }
+
+    const maxCourts = parseInt(payload.maxCourts, 10);
+    if (Number.isFinite(maxCourts) && maxCourts > (this._data.settings.courts || 0)) {
+      this._data.settings.courts = maxCourts;
+    }
+
+    this._data.settings.schedulePublished = false;
+    this.save();
+    this.emit('change');
+    return { ok: true, unmatched };
+  }
+
   // --- Events ---
   on(event, callback) {
     if (!this._listeners[event]) this._listeners[event] = [];

@@ -38,7 +38,7 @@ export function renderAdminPage() {
               ${store.isSchedulePublished() ? 'Re-publish schedule' : 'Publish schedule'}
             </button>
             <button class="btn btn-outline btn-sm" id="btn-export-data">Export PDF</button>
-            <button class="btn btn-outline btn-sm" id="btn-import-data">Import JSON</button>
+            <button class="btn btn-outline btn-sm" id="btn-import-data">Import Excel</button>
             <button class="btn btn-danger btn-sm" id="btn-reset-data">Reset all</button>
           </div>
           <p class="live-sync-status ${store.isSchedulePublished() ? 'is-live' : ''}" id="live-sync-status">
@@ -934,27 +934,36 @@ export function initAdminPage() {
     importBtn.addEventListener('click', () => {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = '.json';
-      input.onchange = (e) => {
+      input.accept = '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      input.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const success = store.importData(ev.target.result);
-          if (success) {
-            showToast('Data imported successfully!', 'success');
-            const app = document.getElementById('app');
-            if (app) {
-              const { renderNavbar, initNavbar } = require_navbar();
-              app.innerHTML = renderNavbar('/admin') + renderAdminPage();
-              initNavbar();
-              initAdminPage();
+        try {
+          const buffer = await file.arrayBuffer();
+          const { parseTournamentExcel } = await import('./import-excel.js');
+          const parsed = parseTournamentExcel(buffer);
+          const { stats } = parsed;
+          showConfirm({
+            title: 'Import Excel schedule',
+            message: `This will replace current players, groups, and fixtures with ${stats.participants} players/pairs, ${stats.groupMatches} group matches, and ${stats.knockoutMatches} knockout slots from “${file.name}”.`,
+            confirmLabel: 'Import schedule',
+            onConfirm: () => {
+              const result = store.importExcelDraw(parsed);
+              if (!result.ok) {
+                showToast('Could not import this Excel file', 'error');
+                return;
+              }
+              rerenderAdmin();
+              const extra = result.unmatched.length
+                ? ` (${result.unmatched.length} match${result.unmatched.length === 1 ? '' : 'es'} skipped)`
+                : '';
+              showToast(`Imported ${stats.groupMatches} group matches${extra}`, 'success');
             }
-          } else {
-            showToast('Invalid data file', 'error');
-          }
-        };
-        reader.readAsText(file);
+          });
+        } catch (err) {
+          console.error(err);
+          showToast(err?.message || 'Could not read this Excel file', 'error');
+        }
       };
       input.click();
     });
@@ -1010,6 +1019,15 @@ function bindAdminSync() {
   };
   store.on('change', onAdminChange);
   startLiveSync({ isAdmin: true });
+}
+
+function rerenderAdmin() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  const { renderNavbar, initNavbar } = require_navbar();
+  app.innerHTML = renderNavbar('/admin') + renderAdminPage();
+  initNavbar();
+  initAdminPage();
 }
 
 // Helper to lazily import navbar (avoid circular deps)
