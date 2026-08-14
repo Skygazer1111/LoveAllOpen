@@ -14,7 +14,6 @@ let onStoreChange = null;
 let lastContentKey = '';
 let refreshTimer = null;
 let showCompleted = false;
-let showStandings = false;
 let showBracket = true;
 
 function timeSort(item) {
@@ -51,7 +50,6 @@ function contentKey(categoryId) {
     Number(data?.updatedAt) || 0,
     store.isSchedulePublished() ? 1 : 0,
     showCompleted ? 1 : 0,
-    showStandings ? 1 : 0,
     showBracket ? 1 : 0,
     live,
     done,
@@ -205,28 +203,21 @@ function renderScheduleContent(categoryId) {
   if (hasGroups) {
     html += `
       <section class="section">
-        <div class="schedule-toggle-row schedule-toggle-row-spaced">
-          <div class="section-intro" style="margin:0;">
-            <p class="eyebrow">Standings</p>
-            <h2 class="section-heading">Group stage</h2>
-          </div>
-          <button type="button" class="btn btn-outline btn-sm" id="btn-toggle-standings" aria-expanded="${showStandings}">
-            ${showStandings ? 'Hide' : 'Show'} tables
-          </button>
+        <div class="section-intro">
+          <p class="eyebrow">Standings</p>
+          <h2 class="section-heading">Group stage</h2>
         </div>
-        ${showStandings ? `
-          <div class="groups-grid">
-            ${groups.map(group => `
-              <div class="group-card">
-                <div class="group-card-header">
-                  <span class="group-name">${group.name}</span>
-                  <span class="group-count">${group.participantIds.length} players</span>
-                </div>
-                ${renderGroupStandings(categoryId, group.id)}
+        <div class="groups-grid">
+          ${groups.map(group => `
+            <div class="group-card">
+              <div class="group-card-header">
+                <span class="group-name">${group.name}</span>
+                <span class="group-count">${group.participantIds.length} players</span>
               </div>
-            `).join('')}
-          </div>
-        ` : ''}
+              ${renderGroupStandings(categoryId, group.id)}
+            </div>
+          `).join('')}
+        </div>
       </section>
     `;
   }
@@ -254,10 +245,6 @@ function renderScheduleContent(categoryId) {
 function bindScheduleToggles() {
   document.getElementById('btn-toggle-completed')?.addEventListener('click', () => {
     showCompleted = !showCompleted;
-    refreshScheduleContent({ force: true });
-  });
-  document.getElementById('btn-toggle-standings')?.addEventListener('click', () => {
-    showStandings = !showStandings;
     refreshScheduleContent({ force: true });
   });
   document.getElementById('btn-toggle-bracket')?.addEventListener('click', () => {
@@ -296,7 +283,6 @@ export function initSchedulePage() {
     tab.addEventListener('click', () => {
       currentCategory = tab.dataset.category;
       showCompleted = false;
-      showStandings = false;
       showBracket = true;
       tabs.forEach(t => {
         t.classList.remove('active');
