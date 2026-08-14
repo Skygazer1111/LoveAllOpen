@@ -45,13 +45,16 @@ export function renderBracket(categoryId, isAdmin = false) {
                     <span class="bracket-player-name ${!p2 ? 'tbd' : ''}">${name2}</span>
                     <span class="bracket-player-score">${match.score2 !== null ? match.score2 : ''}</span>
                   </div>
-                  ${isAdmin && ready && match.status !== 'completed' ? `
+                  ${isAdmin && match.status !== 'completed' ? `
                     <div class="bracket-match-actions">
-                      ${match.status === 'upcoming' ? `
+                      <button class="btn btn-sm btn-outline" onclick="window.openEditMatchModal(${ref})">Edit</button>
+                      ${ready && match.status === 'upcoming' ? `
                         <button class="btn btn-sm btn-outline" onclick="window.setFixtureLive(${ref})">Live</button>
                       ` : ''}
-                      <button class="btn btn-sm btn-outline" onclick="window.openScheduleModal(${ref})">Time</button>
-                      <button class="btn btn-sm btn-accent" onclick="window.openResultModal(${ref})">Winner</button>
+                      ${ready ? `
+                        <button class="btn btn-sm btn-outline" onclick="window.openScheduleModal(${ref})">Time</button>
+                        <button class="btn btn-sm btn-accent" onclick="window.openResultModal(${ref})">Winner</button>
+                      ` : ''}
                     </div>
                   ` : ''}
                   ${isAdmin && match.status === 'completed' ? `

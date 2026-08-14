@@ -194,6 +194,23 @@ class Store {
     this.emit('change');
   }
 
+  isSchedulePublished() {
+    return Boolean(this._data.settings?.schedulePublished);
+  }
+
+  publishSchedule() {
+    this._data.settings.schedulePublished = true;
+    this._data.settings.publishedAt = Date.now();
+    this.save();
+    this.emit('change');
+  }
+
+  unpublishSchedule() {
+    this._data.settings.schedulePublished = false;
+    this.save();
+    this.emit('change');
+  }
+
   // --- Categories ---
   getCategories() {
     return this._data.categories;
@@ -359,6 +376,37 @@ class Store {
     resetMatchResult(found.match);
     this.save();
     this.emit('change');
+  }
+
+  updateGroupMatchPlayers(categoryId, groupId, matchId, player1Id, player2Id) {
+    const found = this._findGroupMatch(categoryId, groupId, matchId);
+    if (!found || found.match.status === 'completed') return false;
+    if (!player1Id || !player2Id || player1Id === player2Id) return false;
+    const allowed = new Set(found.group.participantIds);
+    if (!allowed.has(player1Id) || !allowed.has(player2Id)) return false;
+    found.match.player1Id = player1Id;
+    found.match.player2Id = player2Id;
+    found.match.scheduledTime = '';
+    found.match.court = null;
+    this.save();
+    this.emit('change');
+    return true;
+  }
+
+  updateKnockoutMatchPlayers(categoryId, roundIndex, matchId, player1Id, player2Id) {
+    const found = this._findKnockoutMatch(categoryId, roundIndex, matchId);
+    if (!found || found.match.status === 'completed') return false;
+    if (player1Id && player2Id && player1Id === player2Id) return false;
+    const participants = new Set(this.getParticipants(categoryId).map(p => p.id));
+    if (player1Id && !participants.has(player1Id)) return false;
+    if (player2Id && !participants.has(player2Id)) return false;
+    found.match.player1Id = player1Id || null;
+    found.match.player2Id = player2Id || null;
+    found.match.scheduledTime = '';
+    found.match.court = null;
+    this.save();
+    this.emit('change');
+    return true;
   }
 
   // --- Standings ---
@@ -620,31 +668,88 @@ class Store {
     this.emit('change');
   }
 
-  scheduleCategoryMatches(categoryId, { startTime = '09:00', intervalMins = 15, courts = 2 } = {}) {
+  scheduleCategoryMatches(categoryId, { startTime = '09:00', intervalMins = 15, courts = 2, leagueGapSlots = 1 } = {}) {
     const cat = this._data.categories[categoryId];
     if (!cat) return;
-    const queue = [];
+
+    const leagueMatches = [];
     for (const group of cat.groups || []) {
       for (const match of group.matches || []) {
-        if (match.player1Id && match.player2Id) queue.push(match);
+        if (match.player1Id && match.player2Id) leagueMatches.push(match);
       }
     }
+
+    const knockoutMatches = [];
     for (const round of cat.knockout?.rounds || []) {
       for (const match of round.matches) {
         if (match.player1Id && match.player2Id && match.status !== 'completed') {
-          queue.push(match);
+          knockoutMatches.push(match);
         }
       }
     }
+
     const courtCount = Math.max(1, parseInt(courts, 10) || 2);
     const step = Math.max(5, parseInt(intervalMins, 10) || 15);
-    queue.forEach((match, idx) => {
-      const slot = Math.floor(idx / courtCount);
+    const gap = Math.max(1, parseInt(leagueGapSlots, 10) || 1);
+
+    const leagueSlots = this._buildLeagueSlotsWithGap(leagueMatches, courtCount, gap);
+    let slotIndex = 0;
+    for (const slot of leagueSlots) {
+      slot.forEach((match, courtIdx) => {
+        match.court = courtIdx + 1;
+        match.scheduledTime = addMinutesToTime(startTime, slotIndex * step);
+      });
+      slotIndex++;
+    }
+
+    knockoutMatches.forEach((match, idx) => {
+      const koSlot = slotIndex + Math.floor(idx / courtCount);
       match.court = (idx % courtCount) + 1;
-      match.scheduledTime = addMinutesToTime(startTime, slot * step);
+      match.scheduledTime = addMinutesToTime(startTime, koSlot * step);
     });
+
     this.save();
     this.emit('change');
+  }
+
+  /**
+   * Order league matches into time slots so no player/team plays in consecutive slots.
+   */
+  _buildLeagueSlotsWithGap(matches, courts, gapSlots) {
+    const pending = [...matches];
+    const slots = [];
+    const lastSlot = new Map();
+
+    const canPlay = (participantId, slotIndex) => {
+      const last = lastSlot.get(participantId);
+      return last === undefined || slotIndex - last > gapSlots;
+    };
+
+    while (pending.length > 0) {
+      const slot = [];
+      const slotIndex = slots.length;
+
+      for (let i = pending.length - 1; i >= 0 && slot.length < courts; i--) {
+        const match = pending[i];
+        if (canPlay(match.player1Id, slotIndex) && canPlay(match.player2Id, slotIndex)) {
+          slot.push(match);
+          pending.splice(i, 1);
+          lastSlot.set(match.player1Id, slotIndex);
+          lastSlot.set(match.player2Id, slotIndex);
+        }
+      }
+
+      if (slot.length === 0) {
+        const match = pending.shift();
+        slot.push(match);
+        lastSlot.set(match.player1Id, slotIndex);
+        lastSlot.set(match.player2Id, slotIndex);
+      }
+
+      slots.push(slot);
+    }
+
+    return slots;
   }
 
   listBoardMatches(categoryId) {

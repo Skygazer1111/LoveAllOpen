@@ -15,7 +15,9 @@ export const DEFAULT_DATA = {
     mapsQuery: 'Toneup Badminton Thoraipakkam Chennai',
     shuttles: 'Yonex Mavis 350',
     courts: 2,
-    level: 'Beginner Level'
+    level: 'Beginner Level',
+    schedulePublished: false,
+    publishedAt: null
   },
   categories: {
     'mens-singles': {

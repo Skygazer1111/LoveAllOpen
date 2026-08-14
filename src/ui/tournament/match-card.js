@@ -62,17 +62,21 @@ export function renderMatchCard(categoryId, match, options = {}) {
           <span class="match-player-score">${match.score2 !== null ? match.score2 : '-'}</span>
         </div>
       </div>
-      ${isAdmin && ready ? `
+      ${isAdmin && match.status !== 'completed' ? `
         <div class="match-card-actions">
-          ${match.status === 'upcoming' ? `
+          <button class="btn btn-sm btn-outline" onclick="window.openEditMatchModal(${ref})">Edit</button>
+          ${ready && match.status === 'upcoming' ? `
             <button class="btn btn-sm btn-outline" onclick="window.setFixtureLive(${ref})">Set live</button>
           ` : ''}
-          ${match.status !== 'completed' ? `
+          ${ready && match.status !== 'completed' ? `
             <button class="btn btn-sm btn-outline" onclick="window.openScheduleModal(${ref})">Time</button>
             <button class="btn btn-sm btn-accent" onclick="window.openResultModal(${ref})">Pick winner</button>
-          ` : `
-            <button class="btn btn-sm btn-outline" onclick="window.resetFixture(${ref})">Reset</button>
-          `}
+          ` : ''}
+        </div>
+      ` : ''}
+      ${isAdmin && match.status === 'completed' ? `
+        <div class="match-card-actions">
+          <button class="btn btn-sm btn-outline" onclick="window.resetFixture(${ref})">Reset</button>
         </div>
       ` : ''}
     </div>

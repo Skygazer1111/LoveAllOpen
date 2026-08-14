@@ -33,11 +33,16 @@ export function renderAdminPage() {
       <div class="page-content">
         <div class="admin-toolbar">
           <div class="admin-toolbar-actions">
+            <button class="btn btn-accent btn-sm" id="btn-publish-schedule">
+              ${store.isSchedulePublished() ? 'Re-publish schedule' : 'Publish schedule'}
+            </button>
             <button class="btn btn-outline btn-sm" id="btn-export-data">Export PDF</button>
             <button class="btn btn-outline btn-sm" id="btn-import-data">Import JSON</button>
             <button class="btn btn-danger btn-sm" id="btn-reset-data">Reset all</button>
           </div>
-          <p class="live-sync-status" id="live-sync-status">Publishing live board…</p>
+          <p class="live-sync-status ${store.isSchedulePublished() ? 'is-live' : ''}" id="live-sync-status">
+            ${store.isSchedulePublished() ? 'Schedule is live for players' : 'Draft — not visible to players yet'}
+          </p>
           <button class="btn btn-outline btn-sm" id="btn-logout">Logout</button>
         </div>
 
@@ -317,7 +322,7 @@ function renderMatchesSection(categoryId, cat) {
           <button class="btn btn-outline btn-sm" id="btn-schedule-matches">Set times &amp; courts</button>
         </div>
       </div>
-      <p class="admin-hint">Set a match live when it starts. Pick a winner to complete it — scores are optional. Knockout winners move on automatically.</p>
+      <p class="admin-hint">Edit matchups, set times (league slots leave a rest gap between each player’s matches), then publish when ready.</p>
   `;
 
   for (const group of groups) {
@@ -435,10 +440,12 @@ function bindSettingsEvents() {
     const ok = await publishTournament(store.getData());
     const status = document.getElementById('live-sync-status');
     if (status) {
-      status.textContent = ok ? 'Live board published' : 'Saved on this device — live board not connected';
-      status.classList.toggle('is-live', ok);
+      status.textContent = ok
+        ? 'Event details saved & schedule published'
+        : 'Saved locally — use Publish schedule to push live';
+      status.classList.toggle('is-live', ok && store.isSchedulePublished());
     }
-    showToast(ok ? 'Event details saved & published' : 'Event details saved on this device', 'success');
+    showToast(ok ? 'Event details saved' : 'Event details saved on this device', 'success');
   });
 }
 
@@ -587,7 +594,7 @@ function openBulkScheduleModal(categoryId) {
   showModal({
     title: 'Set times & courts',
     content: `
-      <p class="admin-hint" style="margin-top:0">Fills every ready match in this category, court by court.</p>
+      <p class="admin-hint" style="margin-top:0">League matches are spaced so the same player or pair never plays back-to-back. Knockout times follow after.</p>
       <div class="input-group">
         <label class="input-label">First match</label>
         <input type="time" class="input" id="bulk-start-time" value="09:00" />
@@ -600,20 +607,85 @@ function openBulkScheduleModal(categoryId) {
         <label class="input-label">Courts in use</label>
         <input type="number" class="input" id="bulk-courts" min="1" max="8" value="${settings.courts || 2}" />
       </div>
+      <div class="input-group">
+        <label class="input-label">League rest gap (slots)</label>
+        <input type="number" class="input" id="bulk-league-gap" min="1" max="4" value="1" />
+        <p class="admin-hint" style="margin-top:6px">1 = at least one full slot rest between a player’s league matches.</p>
+      </div>
     `,
     submitLabel: 'Assign times',
     onSubmit: () => {
       store.scheduleCategoryMatches(categoryId, {
         startTime: document.getElementById('bulk-start-time')?.value || '09:00',
         intervalMins: parseInt(document.getElementById('bulk-interval')?.value || '15', 10),
-        courts: parseInt(document.getElementById('bulk-courts')?.value || '2', 10)
+        courts: parseInt(document.getElementById('bulk-courts')?.value || '2', 10),
+        leagueGapSlots: parseInt(document.getElementById('bulk-league-gap')?.value || '1', 10)
       });
       closeModal();
-      showToast('Match times assigned', 'success');
+      showToast('League times assigned with rest gaps', 'success');
       refreshAdminContent();
     }
   });
 }
+
+function participantOptions(categoryId, selectedId, participantIds = null) {
+  let list = store.getParticipants(categoryId);
+  if (participantIds) list = list.filter(p => participantIds.includes(p.id));
+  return list.map(p => {
+    const label = getParticipantDisplayName(p);
+    const sel = p.id === selectedId ? 'selected' : '';
+    return `<option value="${p.id}" ${sel}>${label}</option>`;
+  }).join('');
+}
+
+window.openEditMatchModal = function(categoryId, stage, loc, matchId) {
+  const { match, roundName } = getFixture(categoryId, stage, loc, matchId);
+  if (!match || match.status === 'completed') return;
+
+  const isGroup = stage === 'group';
+  const group = isGroup ? store.getGroups(categoryId).find(g => g.id === loc) : null;
+  const roster = isGroup ? group?.participantIds : store.getParticipants(categoryId).map(p => p.id);
+
+  showModal({
+    title: `${roundName} — edit match`,
+    content: `
+      <p class="admin-hint" style="margin-top:0">Change who plays this match. Times reset so you can re-schedule.</p>
+      <div class="input-group">
+        <label class="input-label">Side 1</label>
+        <select class="select" id="edit-player-1">
+          <option value="">—</option>
+          ${participantOptions(categoryId, match.player1Id, roster)}
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Side 2</label>
+        <select class="select" id="edit-player-2">
+          <option value="">—</option>
+          ${participantOptions(categoryId, match.player2Id, roster)}
+        </select>
+      </div>
+    `,
+    submitLabel: 'Save match',
+    onSubmit: () => {
+      const p1 = document.getElementById('edit-player-1')?.value;
+      const p2 = document.getElementById('edit-player-2')?.value;
+      if (!p1 || !p2) {
+        showToast('Pick both sides', 'error');
+        return;
+      }
+      const ok = isGroup
+        ? store.updateGroupMatchPlayers(categoryId, loc, matchId, p1, p2)
+        : store.updateKnockoutMatchPlayers(categoryId, loc, matchId, p1, p2);
+      if (!ok) {
+        showToast('Could not update match', 'error');
+        return;
+      }
+      closeModal();
+      showToast('Match updated', 'success');
+      refreshAdminContent();
+    }
+  });
+};
 
 // --- Global handlers (called from match card onclick) ---
 
@@ -825,6 +897,23 @@ export function initAdminPage() {
   });
 
   // Toolbar buttons
+  const publishBtn = document.getElementById('btn-publish-schedule');
+  if (publishBtn) {
+    publishBtn.addEventListener('click', async () => {
+      store.publishSchedule();
+      const ok = await publishTournament(store.getData());
+      const status = document.getElementById('live-sync-status');
+      if (status) {
+        status.textContent = ok
+          ? 'Schedule is live for players'
+          : 'Published locally — live board not connected';
+        status.classList.add('is-live');
+      }
+      publishBtn.textContent = 'Re-publish schedule';
+      showToast(ok ? 'Schedule published!' : 'Marked published — connect live board on Vercel', ok ? 'success' : 'info');
+    });
+  }
+
   const exportBtn = document.getElementById('btn-export-data');
   if (exportBtn) {
     exportBtn.addEventListener('click', async () => {
@@ -908,25 +997,18 @@ export function initAdminPage() {
 }
 
 let onAdminChange = null;
-let publishTimer = null;
 
 function bindAdminSync() {
   if (onAdminChange) store.off('change', onAdminChange);
   onAdminChange = () => {
-    clearTimeout(publishTimer);
-    publishTimer = setTimeout(async () => {
-      const ok = await publishTournament(store.getData());
-      const status = document.getElementById('live-sync-status');
-      if (status) {
-        status.textContent = ok ? 'Live board published' : 'Saved on this device — live board not connected';
-        status.classList.toggle('is-live', ok);
-      }
-    }, 400);
+    const status = document.getElementById('live-sync-status');
+    if (status && !store.isSchedulePublished()) {
+      status.textContent = 'Draft — not visible to players yet';
+      status.classList.remove('is-live');
+    }
   };
   store.on('change', onAdminChange);
-  // Admin is writer-only — never pull remote over local edits
   startLiveSync({ isAdmin: true });
-  onAdminChange();
 }
 
 // Helper to lazily import navbar (avoid circular deps)

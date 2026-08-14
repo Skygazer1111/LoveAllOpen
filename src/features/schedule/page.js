@@ -84,6 +84,17 @@ function renderScheduleContent(categoryId) {
   const cat = store.getCategory(categoryId);
   if (!cat) return '';
 
+  if (!store.isSchedulePublished()) {
+    return `
+      <div class="empty-state" data-reveal>
+        <div class="empty-state-title">Fixtures coming soon</div>
+        <div class="empty-state-text">
+          The ${cat.name} schedule hasn’t been published yet. Check back once the organiser releases the draw.
+        </div>
+      </div>
+    `;
+  }
+
   const groups = store.getGroups(categoryId);
   const knockout = store.getKnockout(categoryId);
   const board = store.listBoardMatches(categoryId);

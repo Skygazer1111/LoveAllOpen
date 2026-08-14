@@ -13,7 +13,10 @@ export function renderHomePage() {
   const categories = store.getCategories();
   const cats = Object.values(categories);
 
-  const { live: liveCount, upcoming: upcomingCount } = store.countMatchStatuses();
+  const published = store.isSchedulePublished();
+  const { live: liveCount, upcoming: upcomingCount } = published
+    ? store.countMatchStatuses()
+    : { live: 0, upcoming: 0 };
 
   return `
     <div class="page" id="home-page">
@@ -53,7 +56,11 @@ export function renderHomePage() {
             <div>
               <p class="eyebrow">Level</p>
               <h2 class="event-strip-value">${settings.level || 'Beginner'}</h2>
-              <p class="muted">${upcomingCount + liveCount > 0 ? `${upcomingCount + liveCount} fixtures listed` : 'See Fixtures for the schedule'}</p>
+              <p class="muted">${published
+                ? (upcomingCount + liveCount > 0
+                  ? `${upcomingCount + liveCount} fixtures listed`
+                  : 'See Fixtures for the schedule')
+                : 'Schedule publishes soon'}</p>
             </div>
           </div>
         </section>
@@ -155,18 +162,22 @@ export function renderHomePage() {
                     : `<span class="fx-mark" aria-hidden="true"></span> Fixtures`}
                 </p>
                 <h2 class="fx-banner-title">
-                  ${liveCount > 0
-                    ? 'Matches are live — follow every score'
-                    : upcomingCount > 0
-                      ? 'The draw is up — check your matches'
-                      : 'Match schedule goes live here'}
+                  ${!published
+                    ? 'Match schedule goes live here'
+                    : liveCount > 0
+                      ? 'Matches are live — follow every score'
+                      : upcomingCount > 0
+                        ? 'The draw is up — check your matches'
+                        : 'Match schedule goes live here'}
                 </h2>
                 <p class="fx-banner-text">
-                  ${liveCount > 0
-                    ? `${liveCount} match${liveCount === 1 ? '' : 'es'} live right now — times, courts, and results update as play happens.`
-                    : upcomingCount > 0
-                      ? `${upcomingCount} fixtures scheduled. Open the board for groups, times, and knockouts.`
-                      : 'Once the admin publishes the draw, every group match and knockout fixture appears on the schedule.'}
+                  ${!published
+                    ? 'Once the organiser publishes the draw, every group match and knockout fixture appears here.'
+                    : liveCount > 0
+                      ? `${liveCount} match${liveCount === 1 ? '' : 'es'} live right now — times, courts, and results update as play happens.`
+                      : upcomingCount > 0
+                        ? `${upcomingCount} fixtures scheduled. Open the board for groups, times, and knockouts.`
+                        : 'Once the admin publishes the draw, every group match and knockout fixture appears on the schedule.'}
                 </p>
               </div>
               <a href="#/schedule" class="fx-banner-cta">
