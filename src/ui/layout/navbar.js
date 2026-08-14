@@ -6,7 +6,8 @@ export function renderNavbar(currentPath) {
   // Admin stays available at #/admin but is intentionally hidden from public nav
   const links = [
     { path: '/', label: 'Home' },
-    { path: '/schedule', label: 'Fixtures' }
+    { path: '/schedule', label: 'Fixtures' },
+    { path: '/rules', label: 'Rules' }
   ];
 
   const onHero = currentPath === '/';

@@ -6,6 +6,7 @@ import { Router } from './app/router.js';
 import { renderNavbar, initNavbar } from './ui/layout/navbar.js';
 import { renderHomePage, initHomePage } from './features/home/page.js';
 import { renderSchedulePage, initSchedulePage } from './features/schedule/page.js';
+import { renderRulesPage, initRulesPage } from './features/rules/page.js';
 import { renderAdminPage, initAdminPage } from './features/admin/page.js';
 import {
   renderPrivacyPage,
@@ -24,6 +25,7 @@ const app = document.getElementById('app');
 const routes = [
   { path: '/', name: 'home', render: renderHomePage, init: initHomePage },
   { path: '/schedule', name: 'schedule', render: renderSchedulePage, init: initSchedulePage },
+  { path: '/rules', name: 'rules', render: renderRulesPage, init: initRulesPage },
   { path: '/admin', name: 'admin', render: renderAdminPage, init: initAdminPage },
   { path: '/privacy', name: 'privacy', render: renderPrivacyPage, init: initPrivacyPage, hideNavbar: true },
   { path: '/terms', name: 'terms', render: renderTermsPage, init: initTermsPage, hideNavbar: true }

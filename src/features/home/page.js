@@ -32,6 +32,7 @@ export function renderHomePage() {
           <p class="hero-lede">Badminton tournament — ${settings.tournamentDate}</p>
           <div class="hero-cta">
             <a href="#/schedule" class="btn btn-accent btn-lg">View fixtures</a>
+            <a href="#/rules" class="btn btn-ghost-light btn-lg">Tournament rules</a>
             <button type="button" class="btn btn-ghost-light btn-lg" id="btn-scroll-venue">Find the venue</button>
           </div>
         </div>
