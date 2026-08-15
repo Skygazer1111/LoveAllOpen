@@ -2040,11 +2040,12 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 10px 14px;
   background: var(--mist);
   border-radius: 12px;
 }
-.participant-info { display: flex; align-items: center; gap: 12px; }
+.participant-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .participant-number {
   font-family: var(--font-heading);
   font-weight: 800;
@@ -2053,6 +2054,12 @@ h1, h2, h3, h4 {
 }
 .participant-name { font-weight: 600; }
 .participant-detail { font-size: 0.82rem; color: var(--text-muted); }
+.participant-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 
 .score-input-group {
   display: flex;

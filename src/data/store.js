@@ -261,6 +261,34 @@ class Store {
     return newP;
   }
 
+  updateParticipant(categoryId, participantId, updates) {
+    const cat = this._data.categories[categoryId];
+    if (!cat) return false;
+    const participant = cat.participants.find(p => p.id === participantId);
+    if (!participant) return false;
+
+    if (updates.name !== undefined) {
+      const name = String(updates.name || '').trim();
+      if (!name) return false;
+      participant.name = name;
+      delete participant.player1;
+      delete participant.player2;
+      delete participant.teamName;
+    } else {
+      const player1 = String(updates.player1 || '').trim();
+      const player2 = String(updates.player2 || '').trim();
+      if (!player1 || !player2) return false;
+      participant.player1 = player1;
+      participant.player2 = player2;
+      delete participant.name;
+      delete participant.teamName;
+    }
+
+    this.save();
+    this.emit('change');
+    return true;
+  }
+
   removeParticipant(categoryId, participantId) {
     const cat = this._data.categories[categoryId];
     if (!cat) return;

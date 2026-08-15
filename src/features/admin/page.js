@@ -220,9 +220,14 @@ function renderParticipantsSection(categoryId, cat) {
                   <div class="participant-name">${getParticipantDisplayName(p)}</div>
                 </div>
               </div>
-              <button class="btn btn-icon btn-danger" onclick="window.removeParticipant('${categoryId}', '${p.id}')" title="Remove">
-                <i class='bx bx-x'></i>
-              </button>
+              <div class="participant-actions">
+                <button class="btn btn-icon btn-outline" onclick="window.editParticipant('${categoryId}', '${p.id}')" title="Edit name">
+                  <i class='bx bx-edit-alt'></i>
+                </button>
+                <button class="btn btn-icon btn-danger" onclick="window.removeParticipant('${categoryId}', '${p.id}')" title="Remove">
+                  <i class='bx bx-x'></i>
+                </button>
+              </div>
             </div>
           `).join('')}
         </div>
@@ -696,6 +701,78 @@ window.openEditMatchModal = function(categoryId, stage, loc, matchId) {
 };
 
 // --- Global handlers (called from match card onclick) ---
+
+function openEditParticipantModal(categoryId, participantId) {
+  const cat = store.getCategory(categoryId);
+  const participant = store.getParticipantById(categoryId, participantId);
+  if (!cat || !participant) return;
+
+  const isSingles = cat.type === 'singles';
+  let content;
+  if (isSingles) {
+    content = `
+      <div class="input-group">
+        <label class="input-label">Player Name</label>
+        <input type="text" class="input" id="edit-player-name" value="${escapeAttr(participant.name || '')}" placeholder="Enter player name" />
+      </div>
+    `;
+  } else {
+    content = `
+      <div class="input-group">
+        <label class="input-label">Player 1</label>
+        <input type="text" class="input" id="edit-player1" value="${escapeAttr(participant.player1 || '')}" placeholder="Enter player 1 name" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">Player 2</label>
+        <input type="text" class="input" id="edit-player2" value="${escapeAttr(participant.player2 || '')}" placeholder="Enter player 2 name" />
+      </div>
+    `;
+  }
+
+  showModal({
+    title: `Edit ${isSingles ? 'Player' : 'Pair'} — ${cat.name}`,
+    content,
+    submitLabel: 'Save name',
+    onSubmit: () => {
+      let ok = false;
+      if (isSingles) {
+        const name = document.getElementById('edit-player-name')?.value?.trim();
+        if (!name) {
+          showToast('Please enter a player name', 'error');
+          return;
+        }
+        ok = store.updateParticipant(categoryId, participantId, { name });
+      } else {
+        const player1 = document.getElementById('edit-player1')?.value?.trim();
+        const player2 = document.getElementById('edit-player2')?.value?.trim();
+        if (!player1 || !player2) {
+          showToast('Please enter both player names', 'error');
+          return;
+        }
+        ok = store.updateParticipant(categoryId, participantId, { player1, player2 });
+      }
+      if (!ok) {
+        showToast('Could not update name', 'error');
+        return;
+      }
+      closeModal();
+      showToast('Name updated', 'success');
+      refreshAdminContent();
+    }
+  });
+}
+
+function escapeAttr(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+window.editParticipant = function(categoryId, participantId) {
+  openEditParticipantModal(categoryId, participantId);
+};
 
 window.removeParticipant = function(categoryId, participantId) {
   const p = store.getParticipantById(categoryId, participantId);
