@@ -1115,6 +1115,7 @@ class Store {
       }
 
       let matchNumByGroup = new Map();
+      const seenPairs = new Set();
       for (const row of incoming.groupMatches || []) {
         const id1 = idByKey.get(keyOf(row.side1));
         const id2 = idByKey.get(keyOf(row.side2));
@@ -1136,6 +1137,15 @@ class Store {
           unmatched.push(row.label || 'Group match with mixed groups');
           continue;
         }
+
+        // Skip duplicate pairings (same two players listed twice in the sheet)
+        const pairKey = `${group.id}:${[id1, id2].sort().join('|')}`;
+        if (seenPairs.has(pairKey)) {
+          unmatched.push(`Duplicate skipped: ${row.label || 'same pairing twice'}`);
+          continue;
+        }
+        seenPairs.add(pairKey);
+
         const n = (matchNumByGroup.get(group.id) || 0) + 1;
         matchNumByGroup.set(group.id, n);
         const match = createMatch(n, id1, id2);
