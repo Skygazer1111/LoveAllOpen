@@ -762,14 +762,6 @@ function openEditParticipantModal(categoryId, participantId) {
   });
 }
 
-function escapeAttr(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 window.editParticipant = function(categoryId, participantId) {
   openEditParticipantModal(categoryId, participantId);
 };
