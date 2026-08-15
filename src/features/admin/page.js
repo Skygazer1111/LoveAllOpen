@@ -1004,7 +1004,7 @@ export function initAdminPage() {
       try {
         const { downloadParticipantsPdf } = await import('./export-pdf.js');
         const filename = downloadParticipantsPdf();
-        showToast(`Downloaded ${filename}`, 'success');
+        showToast(`Downloaded full fixtures PDF: ${filename}`, 'success');
       } catch (err) {
         console.error(err);
         showToast('Could not create PDF', 'error');
