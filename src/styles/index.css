@@ -524,11 +524,31 @@ h1, h2, h3, h4 {
   will-change: transform;
   transform: scale(1.06);
 }
-.hero-img {
+.hero-slideshow {
+  position: absolute;
+  inset: 0;
+}
+.hero-slide {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--hero-fade-ms, 1.2s) ease-in-out;
+  will-change: opacity;
+}
+.hero-slide.is-active {
+  opacity: 1;
   animation: hero-ken 18s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide {
+    transition: none;
+  }
+  .hero-slide.is-active {
+    animation: none;
+  }
 }
 .hero-veil {
   position: absolute;

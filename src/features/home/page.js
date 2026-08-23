@@ -7,6 +7,8 @@ import { initMotion } from '../../ui/motion.js';
 import { renderFooter } from '../../ui/layout/footer.js';
 import { mapsEmbedUrl, mapsLinkUrl } from './maps.js';
 import { renderCountdownSection, initCountdown } from './countdown.js';
+import { heroPhotos } from './hero-photos.js';
+import { initHeroSlideshow } from './hero-slideshow.js';
 
 export function renderHomePage() {
   const settings = store.getSettings();
@@ -22,7 +24,17 @@ export function renderHomePage() {
     <div class="page" id="home-page">
       <section class="hero">
         <div class="hero-media" data-parallax aria-hidden="true">
-          <img src="/images/poster.png" alt="" class="hero-img" />
+          <div class="hero-slideshow">
+            ${heroPhotos.map((src, i) => `
+              <img
+                src="${src}"
+                alt=""
+                class="hero-slide${i === 0 ? ' is-active' : ''}"
+                loading="${i === 0 ? 'eager' : 'lazy'}"
+                decoding="async"
+              />
+            `).join('')}
+          </div>
           <div class="hero-veil"></div>
         </div>
         <div class="hero-content">
@@ -317,7 +329,9 @@ export function renderHomePage() {
 }
 
 export function initHomePage() {
-  initMotion(document.getElementById('home-page') || document);
+  const root = document.getElementById('home-page') || document;
+  initMotion(root);
+  initHeroSlideshow(root);
   initCountdown();
   document.getElementById('btn-scroll-venue')?.addEventListener('click', () => {
     document.getElementById('venue')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
