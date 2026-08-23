@@ -28,6 +28,15 @@ export function renderHomePage() {
             ${heroPhotos.map((src, i) => `
               <div class="hero-slide${i === 0 ? ' is-active' : ''}">
                 <img
+                  class="hero-slide-fill"
+                  src="${src}"
+                  alt=""
+                  aria-hidden="true"
+                  loading="${i === 0 ? 'eager' : 'lazy'}"
+                  decoding="async"
+                />
+                <img
+                  class="hero-slide-photo"
                   src="${src}"
                   alt=""
                   loading="${i === 0 ? 'eager' : 'lazy'}"
