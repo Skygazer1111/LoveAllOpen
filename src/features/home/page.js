@@ -26,13 +26,14 @@ export function renderHomePage() {
         <div class="hero-media" data-parallax aria-hidden="true">
           <div class="hero-slideshow">
             ${heroPhotos.map((src, i) => `
-              <img
-                src="${src}"
-                alt=""
-                class="hero-slide${i === 0 ? ' is-active' : ''}"
-                loading="${i === 0 ? 'eager' : 'lazy'}"
-                decoding="async"
-              />
+              <div class="hero-slide${i === 0 ? ' is-active' : ''}">
+                <img
+                  src="${src}"
+                  alt=""
+                  loading="${i === 0 ? 'eager' : 'lazy'}"
+                  decoding="async"
+                />
+              </div>
             `).join('')}
           </div>
           <div class="hero-veil"></div>

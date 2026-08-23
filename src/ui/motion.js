@@ -56,7 +56,7 @@ export function initMotion(root = document) {
   if (hero) {
     parallaxHandler = () => {
       const y = Math.min(window.scrollY * 0.28, 140);
-      hero.style.transform = `translate3d(0, ${y}px, 0) scale(1.06)`;
+      hero.style.transform = `translate3d(0, ${y}px, 0)`;
     };
     parallaxHandler();
     window.addEventListener('scroll', parallaxHandler, { passive: true });
