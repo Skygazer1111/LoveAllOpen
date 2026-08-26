@@ -5,7 +5,6 @@
 import { Router } from './app/router.js';
 import { renderNavbar, initNavbar } from './ui/layout/navbar.js';
 import { renderHomePage, initHomePage } from './features/home/page.js';
-import { destroyHeroSlideshow } from './features/home/hero-slideshow.js';
 import { renderSchedulePage, initSchedulePage } from './features/schedule/page.js';
 import { renderRulesPage, initRulesPage } from './features/rules/page.js';
 import { renderAdminPage, initAdminPage } from './features/admin/page.js';
@@ -36,8 +35,6 @@ const router = new Router(routes, '/');
 
 function renderPage(route) {
   if (!route) return;
-
-  destroyHeroSlideshow();
 
   const navbarHtml = route.hideNavbar ? '' : renderNavbar(route.path);
   const pageHtml = route.render();
